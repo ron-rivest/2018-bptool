@@ -87,12 +87,13 @@ def compute_winner(sample_tallies, total_num_votes, seed, pretty_print=False):
         if final_tally is None:
             final_tally = final_county_tally
         else:
-            final_tally = [sum(k) for k in zip(final_tally, final_county_tally)]
+            final_tally = [sum(k)
+                           for k in zip(final_tally, final_county_tally)]
     winner = final_tally.index(max(final_tally))
     if pretty_print:
-        print('Candidate {} is the winner with {} votes. ' \
+        print('Candidate {} is the winner with {} votes. '
               'The final vote tally for all the candidates was {}'.format(
-            winner, final_tally[winner], final_tally))
+                  winner, final_tally[winner], final_tally))
     return winner
 
 
@@ -110,13 +111,14 @@ def compute_winner_probabilities(sample_tallies, total_num_votes, seed, num_tria
     for i in range(num_trials):
         winners[compute_winner(sample_tallies, total_num_votes, seed) + 1] += 1
     winners_list = list(winners.items())
-    most_likely_winner = winners_list.index(max(winners_list, key=lambda x: x[1]))
+    most_likely_winner = winners_list.index(
+        max(winners_list, key=lambda x: x[1]))
     if pretty_print:
-        print('Candidate {} is the winner most often with {} wins out ' \
+        print('Candidate {} is the winner most often with {} wins out '
               'of {} trials in total'.format(
-            winners_list[most_likely_winner][0],
-            winners_list[most_likely_winner][1],
-            num_trials))
+                  winners_list[most_likely_winner][0],
+                  winners_list[most_likely_winner][1],
+                  num_trials))
 
 
 def preprocess_audit_seed(audit_seed):
@@ -170,7 +172,7 @@ def preprocess_csv(path_to_csv):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Bayesian Audit Process For A Single Contest ' \
+    parser = argparse.ArgumentParser(description='Bayesian Audit Process For A Single Contest '
                                                  'Across Multiple Counties')
     parser.add_argument("--sample_tally",
                         help="If the election only has one county, "
@@ -210,4 +212,5 @@ if __name__ == '__main__':
 
     num_trials = int(args.num_trials)
 
-    compute_winner_probabilities(sample_tallies, total_num_votes, audit_seed, num_trials)
+    compute_winner_probabilities(
+        sample_tallies, total_num_votes, audit_seed, num_trials)
