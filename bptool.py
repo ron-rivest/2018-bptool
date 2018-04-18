@@ -135,14 +135,12 @@ def preprocess_audit_seed(audit_seed):
     return audit_seed
 
 
-def preprocess_single_tally(sample_tally):
+def preprocess_single_tally(sample_tally_list):
     """
     Preprocesses a single tally passed in as an argument. In particular,
     strips spaces and converts each comma-separated element of the tally
     into an integer.
     """
-    sample_tally_list = sample_tally.split(',')
-    sample_tally_list = [int(k.strip()) for k in sample_tally_list]
     return [sample_tally_list]
 
 
@@ -179,13 +177,16 @@ def preprocess_csv(path_to_csv):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Bayesian Audit Process For A Single Contest '
                                                  'Across Multiple Counties')
-    parser.add_argument("--sample_tally",
-                        help="If the election only has one county, "
-                             "then pass the tally in as a comma-separated list of numbers."
-                             "An example input would be: 5,30,25")
-    parser.add_argument("--total_num_votes",
+
+    parser.add_argument("total_num_votes",
                         help="The total number of votes (including the already audited ones) "
                              "which are included in the election.")
+
+    parser.add_argument("--sample_tally",
+                        help="If the election only has one county, "
+                             "then pass the tally as space separated numbers,"
+                             "e.g.  5 30 25", nargs="*", type=int)
+
     parser.add_argument("--path_to_csv",
                         help="If the election spans multiple counties, "
                              "it might be easier to pass in the sample tallies "
@@ -194,24 +195,23 @@ if __name__ == '__main__':
                              "of the csv file must be Total Votes and another can be "
                              "County Name. All other columns are assumed to be the names "
                              "or identifiers for candidates.")
+
     parser.add_argument("--audit_seed",
                         help="For reproducibility, we provide the option to seed the "
                              "randomness in the audit. If the same seed is provided, the audit "
-                             "will return the same results.")
+                             "will return the same results.", default=1)
     parser.add_argument("--num_trials",
                         help="Bayesian audits work by simulating the data "
                              "which hasn't been sampled to predict who the winner is. "
                              "This argument specifies how many simulations we should do to "
-                             "predict the winner")
+                             "predict the winner", default=50)
     args = parser.parse_args()
 
-    if args.sample_tally:
+    if args.path_to_csv:
+        sample_tallies, total_num_votes = preprocess_csv(args.path_to_csv)
+    else:
         sample_tallies = preprocess_single_tally(args.sample_tally)
         total_num_votes = [int(args.total_num_votes)]
-
-    else:
-        assert (args.path_to_csv is not None)
-        sample_tallies, total_num_votes = preprocess_csv(args.path_to_csv)
 
     audit_seed = preprocess_audit_seed(args.audit_seed)
 
