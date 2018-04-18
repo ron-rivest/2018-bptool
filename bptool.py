@@ -204,7 +204,7 @@ if __name__ == '__main__':
                         help="Bayesian audits work by simulating the data "
                              "which hasn't been sampled to predict who the winner is. "
                              "This argument specifies how many simulations we should do to "
-                             "predict the winner", default=50)
+                             "predict the winner", default=10000)
     args = parser.parse_args()
 
     if args.path_to_csv:
