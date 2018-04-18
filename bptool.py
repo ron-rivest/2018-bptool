@@ -1,5 +1,5 @@
 # bptool.py
-# Ronald L. Rivest, Mayuri Sridhar, Zara A Perumal
+# Authors: Ronald L. Rivest, Mayuri Sridhar, Zara A Perumal
 # April 23, 2018
 # python3
 
@@ -102,7 +102,7 @@ def compute_winner(sample_tallies, total_num_votes, seed, pretty_print=False):
     return winner
 
 
-def compute_winner_probabilities(sample_tallies, total_num_votes, seed, num_trials,
+def compute_winner_probabilities(sample_tallies, total_num_votes, seed, num_trials, candidate_names,
                                  pretty_print=True):
     """
     Runs several simulations of the Bayesian audit to find the most plausible winner.
@@ -118,12 +118,18 @@ def compute_winner_probabilities(sample_tallies, total_num_votes, seed, num_tria
     winners_list = list(winners.items())
     most_likely_winner = winners_list.index(
         max(winners_list, key=lambda x: x[1]))
+
     if pretty_print:
-        print('Candidate {} is the winner most often with {} wins out '
-              'of {} trials in total'.format(
-                  winners_list[most_likely_winner][0],
-                  winners_list[most_likely_winner][1],
-                  num_trials))
+        print("With %d trials in total" % num_trials, end=" ")
+        print("and candidates: %s" % str(candidate_names))
+        print("Simulation results are:")
+        sorted_winners_list = sorted(
+            winners_list, key=lambda tup: tup[1], reverse=True)
+        print("Candidate name \t\t Estimate probability of winning a full recount ")
+        for candidate_index, votes in sorted_winners_list:
+            candidate_name = str(candidate_names[candidate_index - 1])
+            vote_percent = int(votes) / float(num_trials)
+            print("%s \t\t\t %.02f  " % (candidate_name, vote_percent))
 
 
 def preprocess_audit_seed(audit_seed):
@@ -161,6 +167,8 @@ def preprocess_csv(path_to_csv):
         sample_tallies = []
         total_num_votes = []
         reader = csv.DictReader(csvfile)
+        candidate_names = [col for col in reader.fieldnames if col.strip().lower() not in [
+            "county name", "total votes"]]
         for row in reader:
             sample_tally = []
             for key in row:
@@ -171,7 +179,7 @@ def preprocess_csv(path_to_csv):
                 else:
                     sample_tally.append(int(row[key].strip()))
             sample_tallies.append(sample_tally)
-    return sample_tallies, total_num_votes
+    return sample_tallies, total_num_votes, candidate_names
 
 
 if __name__ == '__main__':
@@ -208,14 +216,16 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.path_to_csv:
-        sample_tallies, total_num_votes = preprocess_csv(args.path_to_csv)
+        sample_tallies, total_num_votes, candidate_names = preprocess_csv(
+            args.path_to_csv)
     else:
         sample_tallies = preprocess_single_tally(args.sample_tally)
         total_num_votes = [int(args.total_num_votes)]
+        candidate_names = list(range(len(sample_tallies[0])))
 
     audit_seed = preprocess_audit_seed(args.audit_seed)
 
     num_trials = int(args.num_trials)
 
     compute_winner_probabilities(
-        sample_tallies, total_num_votes, audit_seed, num_trials)
+        sample_tallies, total_num_votes, audit_seed, num_trials, candidate_names)
