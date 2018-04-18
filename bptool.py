@@ -1,3 +1,8 @@
+# bptool.py
+# Ronald L. Rivest, Mayuri Sridhar, Zara A Perumal
+# April 23, 2018
+# python3
+
 import argparse
 
 from copy import deepcopy
