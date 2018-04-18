@@ -41,6 +41,7 @@ def create_rs(seed):
     Given a specific seed, create and return a Numpy RandomState object,
     to make all the audit actions reproducible.
     """
+
     if seed is not None:
         seed = convert_int_to_32_bit_numpy_array(seed)
     return np.random.RandomState(seed)
@@ -53,25 +54,35 @@ def dirichlet_multinomial(sample_tally, total_num_votes, rs):
     and a random state. There is an additional pseudocount of
     one vote per candidate in this simulation.
     """
-    unsampled_size = total_num_votes - sum(sample_tally)
-    sample_with_hyp = deepcopy(sample_tally)
-    sample_with_hyp = [k + 1 for k in sample_with_hyp]
 
-    gamma_sample = [rs.gamma(k) for k in sample_with_hyp]
-    gamma_sample_normalizer = sum(gamma_sample)
-    gamma_sample = [k / float(sum(gamma_sample)) for k in gamma_sample]
+    sample_size = sum(sample_tally)
+    if sample_size > total_num_votes:
+        raise ValueError("total_num_votes {} less than sample_size {}."
+                         .format(total_num_votes, sample_size))
 
-    multinomial_sample = rs.multinomial(unsampled_size, gamma_sample)
+    nonsample_size = total_num_votes - sample_size
+
+    pseudocount_for_prior = 1
+    sample_with_prior = deepcopy(sample_tally)
+    sample_with_prior = [k + pseudocount_for_prior
+                         for k in sample_with_prior]
+
+    gamma_sample = [rs.gamma(k) for k in sample_with_prior]
+    gamma_sample_sum = float(sum(gamma_sample))
+    gamma_sample = [k / gamma_sample_sum for k in gamma_sample]
+
+    multinomial_sample = rs.multinomial(nonsample_size, gamma_sample)
 
     return multinomial_sample
 
 
-def generate_unsampled(tally, total_num_votes, seed):
+def generate_nonsample(tally, total_num_votes, seed):
     """
     Given a tally, the total number of votes in an election, and a seed,
-    generate the unsampled votes in the election using the Dirichlet multinomial
+    generate the nonsample votes in the election using the Dirichlet multinomial
     distribution.
     """
+    
     rs = create_rs(seed)
     return dirichlet_multinomial(tally, total_num_votes, rs)
 
@@ -81,14 +92,15 @@ def compute_winner(sample_tallies, total_num_votes, seed, pretty_print=False):
     Given a list of sample tallies, the number of votes from each county, and
     a random seed, compute the winner in a single simulation. In particular,
     for each county, we use the Dirichlet-Multinomial distribution to generate
-    the unsampled tallies. Then, we sum over all the counties to produce our
+    the nonsample tallies. Then, we sum over all the counties to produce our
     final tally and calculate the predicted winner over all the counties in
     the election.
     """
+    
     final_tally = None
     for i, sample_tally in enumerate(sample_tallies):
-        unsampled = generate_unsampled(sample_tally, total_num_votes[i], seed)
-        final_county_tally = [sum(k) for k in zip(sample_tally, unsampled)]
+        nonsample = generate_nonsample(sample_tally, total_num_votes[i], seed)
+        final_county_tally = [sum(k) for k in zip(sample_tally, nonsample)]
         if final_tally is None:
             final_tally = final_county_tally
         else:
@@ -102,16 +114,21 @@ def compute_winner(sample_tallies, total_num_votes, seed, pretty_print=False):
     return winner
 
 
-def compute_winner_probabilities(sample_tallies, total_num_votes, seed, num_trials, candidate_names,
+def compute_winner_probabilities(sample_tallies, total_num_votes,
+                                 seed,
+                                 num_trials,
+                                 candidate_names,
                                  pretty_print=True):
     """
-    Runs several simulations of the Bayesian audit to find the most plausible winner.
+
+    Runs num_trials simulations of the Bayesian audit to find the most plausible winner.
 
     In particular, we run a single iteration of a Bayesian audit (extend each county's
     sample to simulate all the votes in the county and calculate the overall winner
     across counties) num_trials times. Then, we print the candidate that has won
     the most often, along with the number of trials they have won.
     """
+
     winners = {(k + 1): 0 for k in range(len(sample_tallies[0]))}
     for i in range(num_trials):
         winners[compute_winner(sample_tallies, total_num_votes, seed) + 1] += 1
@@ -136,6 +153,7 @@ def preprocess_audit_seed(audit_seed):
     """
     Preprocesses the audit seed to make it of type int, if it isn't None.
     """
+
     if audit_seed is not None:
         audit_seed = int(audit_seed)
     return audit_seed
@@ -147,6 +165,7 @@ def preprocess_single_tally(sample_tally_list):
     strips spaces and converts each comma-separated element of the tally
     into an integer.
     """
+
     return [sample_tally_list]
 
 
@@ -163,12 +182,14 @@ def preprocess_csv(path_to_csv):
     for county i. Similarly, total_num_votes[i] represents the total
     number of votes in county i.
     """
+
     with open(path_to_csv) as csvfile:
         sample_tallies = []
         total_num_votes = []
         reader = csv.DictReader(csvfile)
-        candidate_names = [col for col in reader.fieldnames if col.strip().lower() not in [
-            "county name", "total votes"]]
+        candidate_names = [col for col in reader.fieldnames
+                           if col.strip().lower() not in
+                           ["county name", "total votes"]]
         for row in reader:
             sample_tally = []
             for key in row:
@@ -207,12 +228,15 @@ if __name__ == '__main__':
     parser.add_argument("--audit_seed",
                         help="For reproducibility, we provide the option to seed the "
                              "randomness in the audit. If the same seed is provided, the audit "
-                             "will return the same results.", default=1)
+                             "will return the same results.",
+                        default=1)
+
     parser.add_argument("--num_trials",
                         help="Bayesian audits work by simulating the data "
                              "which hasn't been sampled to predict who the winner is. "
                              "This argument specifies how many simulations we should do to "
-                             "predict the winner", default=10000)
+                             "predict the winner",
+                        default=10000)
     args = parser.parse_args()
 
     if args.path_to_csv:
@@ -228,4 +252,8 @@ if __name__ == '__main__':
     num_trials = int(args.num_trials)
 
     compute_winner_probabilities(
-        sample_tallies, total_num_votes, audit_seed, num_trials, candidate_names)
+        sample_tallies,
+        total_num_votes,
+        audit_seed,
+        num_trials,
+        candidate_names)
