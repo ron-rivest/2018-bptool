@@ -253,7 +253,7 @@ if __name__ == '__main__':
     else:
         sample_tallies = preprocess_single_tally(args.sample_tally)
         total_num_votes = [int(args.total_num_votes)]
-        candidate_names = list(range(len(sample_tallies[0])))
+        candidate_names = list(range(1,len(sample_tallies[0])+1))
 
     audit_seed = preprocess_audit_seed(args.audit_seed)
 
