@@ -20,6 +20,7 @@ can compute the desired probability of each candidate winning a full recount,
 given sample tallies for each county.
 
 For command-line usage, there are really two modes:
+
 (1) For single-county usage, give a command like:
         python bptool.py 10000 60 50 30
     where
@@ -62,6 +63,16 @@ def convert_int_to_32_bit_numpy_array(v):
     but each value is between 0 and 2**32-1, inclusive.
 
     Example: input 2**64 + 5 yields np.array([5, 0, 1], dtype=int)
+
+    Input Parameters:
+    
+    -v is an integer, representing the audit seed that's being
+    passed in. We expect v to be non-negative.
+    
+    Returns:
+
+    -numpy array created deterministically from v that will
+    be used to initialize the Numpy RandomState.
     """
 
     v = int(v)
@@ -83,6 +94,16 @@ def create_rs(seed):
     Create and return a Numpy RandomState object for a given seed. 
     The input seed should be a python integer, arbitrarily large.
     The purpose of this routine is to make all the audit actions reproducible.
+
+    Input Parameters:
+
+    -seed is an integer or None. Assuming that it isn't None, we
+    convert it into a Numpy Array.
+
+    Returns:
+
+    -a Numpy RandomState object, based on the seed, or the clock
+    time if the seed is None.
     """
 
     if seed is not None:
@@ -100,6 +121,26 @@ def dirichlet_multinomial(sample_tally, total_num_votes, rs):
     given a sample tally, the number of votes in the election,
     and a random state. There is an additional pseudocount of
     one vote per candidate in this simulation.
+
+    Input Parameters:
+
+    -sample_tally is a list of integers, where the i'th index
+    in sample_tally corresponds to the number of votes that candidate
+    i received in the sample.
+
+    -total_num_votes is an integer representing the number of
+    ballots that were cast in this election.
+
+    -rs is a Numpy RandomState object that is used for any
+    random functions in the simulation of the remaining votes. In particular,
+    the gamma functions are made deterministic using this state.
+    
+    Returns:
+
+    -multinomial_sample is a list of integers, which sums up
+    to the total_num_votes - sample_size. The i'th index represents the
+    simulated number of votes for candidate i in the remaining, unsampled
+    votes.
     """
 
     sample_size = sum(sample_tally)
@@ -123,15 +164,34 @@ def dirichlet_multinomial(sample_tally, total_num_votes, rs):
     return multinomial_sample
 
 
-def generate_nonsample_tally(tally, total_num_votes, seed):
+def generate_nonsample_tally(sample_tally, total_num_votes, seed):
     """
-    Given a tally, the total number of votes in an election, and a seed,
+    Given a sample_tally, the total number of votes in an election, and a seed,
     generate the nonsample tally in the election using the Dirichlet multinomial
     distribution.
+
+    Input Parameters:
+
+    -sample_tally is a list of integers, where the i'th index
+    in sample_tally corresponds to the number of votes that candidate
+    i received in the sample.
+
+    -total_num_votes is an integer representing the number of
+    ballots that were cast in this election.
+
+    -seed is an integer or None. Assuming that it isn't None, we
+    use it to seed the random state for the audit.
+    
+    Returns:
+
+    -nonsample_tally is list of integers, which sums up
+    to the total_num_votes - sample_size. The i'th index represents the
+    simulated number of votes for candidate i in the remaining, unsampled
+    votes.
     """
 
     rs = create_rs(seed)
-    nonsample_tally = dirichlet_multinomial(tally, total_num_votes, rs)
+    nonsample_tally = dirichlet_multinomial(sample_tally, total_num_votes, rs)
     return nonsample_tally
 
 
@@ -145,6 +205,28 @@ def compute_winner(sample_tallies, total_num_votes, seed, pretty_print=False):
     a nonsample tally. Then, we sum over all the counties to produce our
     final tally and calculate the predicted winner over all the counties in
     the election.
+
+    Input Parameters:
+
+    -sample_tallies is a list of lists. Each list represents the sample tally
+    for a given county. So, sample_tallies[i] represents the tally for county
+    i. Then, sample_tallies[i][j] represents the number of votes candidate
+    j receives in county i.
+
+    -total_num_votes is an integer representing the number of
+    ballots that were cast in this election.
+
+    -seed is an integer or None. Assuming that it isn't None, we
+    use it to seed the random state for the audit.
+
+    -pretty_print is a Boolean, which defaults to False. When it's set to
+    True, we print the winning candidate, the number of votes they have
+    received and the final vote tally for all the candidates.
+    
+    Returns:
+
+    -winner is an integer, representing the index of the candidate who
+    won the election.
     """
 
     final_tally = None
@@ -178,9 +260,31 @@ def compute_win_probs(sample_tallies,
 
     In particular, we run a single iteration of a Bayesian audit (extend each county's
     sample to simulate all the votes in the county and calculate the overall winner
-    across counties) num_trials times.  
+    across counties) num_trials times.
 
-    Return a list of pairs (i, p) where p is the fraction of the time candidate i has won.
+    Input Parameters:
+
+    -sample_tallies is a list of lists. Each list represents the sample tally
+    for a given county. So, sample_tallies[i] represents the tally for county
+    i. Then, sample_tallies[i][j] represents the number of votes candidate
+    j receives in county i.
+
+    -total_num_votes is an integer representing the number of
+    ballots that were cast in this election.
+
+    -seed is an integer or None. Assuming that it isn't None, we
+    use it to seed the random state for the audit.
+
+    -num_trials is an integer which represents how many simulations of the Bayesian
+    audit we run, to estimate the win probabilities of the candidates.
+
+    -candidate_names is an ordered list of strings, containing the name of
+    every candidate in the contest we are auditing.
+
+    Returns:
+
+    -win_probs is a list of pairs (i, p) where p is the fractional representation of the
+    number of trials that candidate i has won out of the num_trials simulations.
     """
 
     num_candidates = len(candidate_names)
@@ -205,8 +309,21 @@ def compute_win_probs(sample_tallies,
 
 def print_results(candidate_names, win_probs):
     """
-    Given list of candidate_names and win_probs 
-    (a list of (winner index, winning prob) pairs, print summary
+    Given list of candidate_names and win_probs pairs, print summary
+    of the Bayesian audit simulations.
+
+    Input Parameters:
+
+    -candidate_names is an ordered list of strings, containing the name of
+    every candidate in the contest we are auditing.
+
+    -win_probs is a list of pairs (i, p) where p is the fractional representation of the
+    number of trials that candidate i has won out of the num_trials simulations.
+
+    Returns:
+
+    -None, but prints a summary of how often each candidate has won in
+    the simulations.
     """
 
     print("BPTOOL (version 0.8)")
@@ -231,15 +348,28 @@ def print_results(candidate_names, win_probs):
 def preprocess_csv(path_to_csv):
     """
     Preprocess a CSV file into the correct format for our
-    sample tallies. In particular, we ignore the county name column.
-    However, we create a sample_tallies list
-    and a total_num_votes list, which contain the relevant information
-    about each county election.  We also return a list of candidate names.
+    sample tallies. In particular, we ignore the county name column
+    and summarize the relevant information about the sample tallies
+    in each county, the total number of votes in each county, and
+    the candidate names.
 
-    Sample_tallies[i] is a list of ints, where sample_tallies[i][j]
-    represents the number of votes for candidate j in the sample tally
-    for county i. Similarly, total_num_votes[i] represents the total
-    number of votes cast in county i.
+    Input Parameters:
+
+    -path_to_csv is a string, representing the full path to the CSV
+    file, containing sample tallies.
+
+    Returns:
+
+    -sample_tallies is a list of lists. Each list represents the sample tally
+    for a given county. So, sample_tallies[i] represents the tally for county
+    i. Then, sample_tallies[i][j] represents the number of votes candidate
+    j receives in county i.
+
+    -total_num_votes is an integer representing the number of
+    ballots that were cast in this election.
+
+    -candidate_names is an ordered list of strings, containing the name of
+    every candidate in the contest we are auditing.
     """
 
     with open(path_to_csv) as csvfile:

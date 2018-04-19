@@ -1,0 +1,2196 @@
+<!doctype html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+
+    <title>bptool API documentation</title>
+    <meta name="description" content="This module provides routines for computing the winning probabilities
+for various candidates, given ..." />
+
+  <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300' rel='stylesheet' type='text/css'>
+  
+  <style type="text/css">
+  
+* {
+  box-sizing: border-box;
+}
+/*! normalize.css v1.1.1 | MIT License | git.io/normalize */
+
+/* ==========================================================================
+   HTML5 display definitions
+   ========================================================================== */
+
+/**
+ * Correct `block` display not defined in IE 6/7/8/9 and Firefox 3.
+ */
+
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+main,
+nav,
+section,
+summary {
+    display: block;
+}
+
+/**
+ * Correct `inline-block` display not defined in IE 6/7/8/9 and Firefox 3.
+ */
+
+audio,
+canvas,
+video {
+    display: inline-block;
+    *display: inline;
+    *zoom: 1;
+}
+
+/**
+ * Prevent modern browsers from displaying `audio` without controls.
+ * Remove excess height in iOS 5 devices.
+ */
+
+audio:not([controls]) {
+    display: none;
+    height: 0;
+}
+
+/**
+ * Address styling not present in IE 7/8/9, Firefox 3, and Safari 4.
+ * Known issue: no IE 6 support.
+ */
+
+[hidden] {
+    display: none;
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+/**
+ * 1. Prevent system color scheme's background color being used in Firefox, IE,
+ *    and Opera.
+ * 2. Prevent system color scheme's text color being used in Firefox, IE, and
+ *    Opera.
+ * 3. Correct text resizing oddly in IE 6/7 when body `font-size` is set using
+ *    `em` units.
+ * 4. Prevent iOS text size adjust after orientation change, without disabling
+ *    user zoom.
+ */
+
+html {
+    background: #fff; /* 1 */
+    color: #000; /* 2 */
+    font-size: 100%; /* 3 */
+    -webkit-text-size-adjust: 100%; /* 4 */
+    -ms-text-size-adjust: 100%; /* 4 */
+}
+
+/**
+ * Address `font-family` inconsistency between `textarea` and other form
+ * elements.
+ */
+
+html,
+button,
+input,
+select,
+textarea {
+    font-family: sans-serif;
+}
+
+/**
+ * Address margins handled incorrectly in IE 6/7.
+ */
+
+body {
+    margin: 0;
+}
+
+/* ==========================================================================
+   Links
+   ========================================================================== */
+
+/**
+ * Address `outline` inconsistency between Chrome and other browsers.
+ */
+
+a:focus {
+    outline: thin dotted;
+}
+
+/**
+ * Improve readability when focused and also mouse hovered in all browsers.
+ */
+
+a:active,
+a:hover {
+    outline: 0;
+}
+
+/* ==========================================================================
+   Typography
+   ========================================================================== */
+
+/**
+ * Address font sizes and margins set differently in IE 6/7.
+ * Address font sizes within `section` and `article` in Firefox 4+, Safari 5,
+ * and Chrome.
+ */
+
+h1 {
+    font-size: 2em;
+    margin: 0.67em 0;
+}
+
+h2 {
+    font-size: 1.5em;
+    margin: 0.83em 0;
+}
+
+h3 {
+    font-size: 1.17em;
+    margin: 1em 0;
+}
+
+h4 {
+    font-size: 1em;
+    margin: 1.33em 0;
+}
+
+h5 {
+    font-size: 0.83em;
+    margin: 1.67em 0;
+}
+
+h6 {
+    font-size: 0.67em;
+    margin: 2.33em 0;
+}
+
+/**
+ * Address styling not present in IE 7/8/9, Safari 5, and Chrome.
+ */
+
+abbr[title] {
+    border-bottom: 1px dotted;
+}
+
+/**
+ * Address style set to `bolder` in Firefox 3+, Safari 4/5, and Chrome.
+ */
+
+b,
+strong {
+    font-weight: bold;
+}
+
+blockquote {
+    margin: 1em 40px;
+}
+
+/**
+ * Address styling not present in Safari 5 and Chrome.
+ */
+
+dfn {
+    font-style: italic;
+}
+
+/**
+ * Address differences between Firefox and other browsers.
+ * Known issue: no IE 6/7 normalization.
+ */
+
+hr {
+    -moz-box-sizing: content-box;
+    box-sizing: content-box;
+    height: 0;
+}
+
+/**
+ * Address styling not present in IE 6/7/8/9.
+ */
+
+mark {
+    background: #ff0;
+    color: #000;
+}
+
+/**
+ * Address margins set differently in IE 6/7.
+ */
+
+p,
+pre {
+    margin: 1em 0;
+}
+
+/**
+ * Correct font family set oddly in IE 6, Safari 4/5, and Chrome.
+ */
+
+code,
+kbd,
+pre,
+samp {
+    font-family: monospace, serif;
+    _font-family: 'courier new', monospace;
+    font-size: 1em;
+}
+
+/**
+ * Improve readability of pre-formatted text in all browsers.
+ */
+
+pre {
+    white-space: pre;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/**
+ * Address CSS quotes not supported in IE 6/7.
+ */
+
+q {
+    quotes: none;
+}
+
+/**
+ * Address `quotes` property not supported in Safari 4.
+ */
+
+q:before,
+q:after {
+    content: '';
+    content: none;
+}
+
+/**
+ * Address inconsistent and variable font size in all browsers.
+ */
+
+small {
+    font-size: 80%;
+}
+
+/**
+ * Prevent `sub` and `sup` affecting `line-height` in all browsers.
+ */
+
+sub,
+sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+}
+
+sup {
+    top: -0.5em;
+}
+
+sub {
+    bottom: -0.25em;
+}
+
+/* ==========================================================================
+   Lists
+   ========================================================================== */
+
+/**
+ * Address margins set differently in IE 6/7.
+ */
+
+dl,
+menu,
+ol,
+ul {
+    margin: 1em 0;
+}
+
+dd {
+    margin: 0 0 0 40px;
+}
+
+/**
+ * Address paddings set differently in IE 6/7.
+ */
+
+menu,
+ol,
+ul {
+    padding: 0 0 0 40px;
+}
+
+/**
+ * Correct list images handled incorrectly in IE 7.
+ */
+
+nav ul,
+nav ol {
+    list-style: none;
+    list-style-image: none;
+}
+
+/* ==========================================================================
+   Embedded content
+   ========================================================================== */
+
+/**
+ * 1. Remove border when inside `a` element in IE 6/7/8/9 and Firefox 3.
+ * 2. Improve image quality when scaled in IE 7.
+ */
+
+img {
+    border: 0; /* 1 */
+    -ms-interpolation-mode: bicubic; /* 2 */
+}
+
+/**
+ * Correct overflow displayed oddly in IE 9.
+ */
+
+svg:not(:root) {
+    overflow: hidden;
+}
+
+/* ==========================================================================
+   Figures
+   ========================================================================== */
+
+/**
+ * Address margin not present in IE 6/7/8/9, Safari 5, and Opera 11.
+ */
+
+figure {
+    margin: 0;
+}
+
+/* ==========================================================================
+   Forms
+   ========================================================================== */
+
+/**
+ * Correct margin displayed oddly in IE 6/7.
+ */
+
+form {
+    margin: 0;
+}
+
+/**
+ * Define consistent border, margin, and padding.
+ */
+
+fieldset {
+    border: 1px solid #c0c0c0;
+    margin: 0 2px;
+    padding: 0.35em 0.625em 0.75em;
+}
+
+/**
+ * 1. Correct color not being inherited in IE 6/7/8/9.
+ * 2. Correct text not wrapping in Firefox 3.
+ * 3. Correct alignment displayed oddly in IE 6/7.
+ */
+
+legend {
+    border: 0; /* 1 */
+    padding: 0;
+    white-space: normal; /* 2 */
+    *margin-left: -7px; /* 3 */
+}
+
+/**
+ * 1. Correct font size not being inherited in all browsers.
+ * 2. Address margins set differently in IE 6/7, Firefox 3+, Safari 5,
+ *    and Chrome.
+ * 3. Improve appearance and consistency in all browsers.
+ */
+
+button,
+input,
+select,
+textarea {
+    font-size: 100%; /* 1 */
+    margin: 0; /* 2 */
+    vertical-align: baseline; /* 3 */
+    *vertical-align: middle; /* 3 */
+}
+
+/**
+ * Address Firefox 3+ setting `line-height` on `input` using `!important` in
+ * the UA stylesheet.
+ */
+
+button,
+input {
+    line-height: normal;
+}
+
+/**
+ * Address inconsistent `text-transform` inheritance for `button` and `select`.
+ * All other form control elements do not inherit `text-transform` values.
+ * Correct `button` style inheritance in Chrome, Safari 5+, and IE 6+.
+ * Correct `select` style inheritance in Firefox 4+ and Opera.
+ */
+
+button,
+select {
+    text-transform: none;
+}
+
+/**
+ * 1. Avoid the WebKit bug in Android 4.0.* where (2) destroys native `audio`
+ *    and `video` controls.
+ * 2. Correct inability to style clickable `input` types in iOS.
+ * 3. Improve usability and consistency of cursor style between image-type
+ *    `input` and others.
+ * 4. Remove inner spacing in IE 7 without affecting normal text inputs.
+ *    Known issue: inner spacing remains in IE 6.
+ */
+
+button,
+html input[type="button"], /* 1 */
+input[type="reset"],
+input[type="submit"] {
+    -webkit-appearance: button; /* 2 */
+    cursor: pointer; /* 3 */
+    *overflow: visible;  /* 4 */
+}
+
+/**
+ * Re-set default cursor for disabled elements.
+ */
+
+button[disabled],
+html input[disabled] {
+    cursor: default;
+}
+
+/**
+ * 1. Address box sizing set to content-box in IE 8/9.
+ * 2. Remove excess padding in IE 8/9.
+ * 3. Remove excess padding in IE 7.
+ *    Known issue: excess padding remains in IE 6.
+ */
+
+input[type="checkbox"],
+input[type="radio"] {
+    box-sizing: border-box; /* 1 */
+    padding: 0; /* 2 */
+    *height: 13px; /* 3 */
+    *width: 13px; /* 3 */
+}
+
+/**
+ * 1. Address `appearance` set to `searchfield` in Safari 5 and Chrome.
+ * 2. Address `box-sizing` set to `border-box` in Safari 5 and Chrome
+ *    (include `-moz` to future-proof).
+ */
+
+input[type="search"] {
+    -webkit-appearance: textfield; /* 1 */
+    -moz-box-sizing: content-box;
+    -webkit-box-sizing: content-box; /* 2 */
+    box-sizing: content-box;
+}
+
+/**
+ * Remove inner padding and search cancel button in Safari 5 and Chrome
+ * on OS X.
+ */
+
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration {
+    -webkit-appearance: none;
+}
+
+/**
+ * Remove inner padding and border in Firefox 3+.
+ */
+
+button::-moz-focus-inner,
+input::-moz-focus-inner {
+    border: 0;
+    padding: 0;
+}
+
+/**
+ * 1. Remove default vertical scrollbar in IE 6/7/8/9.
+ * 2. Improve readability and alignment in all browsers.
+ */
+
+textarea {
+    overflow: auto; /* 1 */
+    vertical-align: top; /* 2 */
+}
+
+/* ==========================================================================
+   Tables
+   ========================================================================== */
+
+/**
+ * Remove most spacing between table cells.
+ */
+
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+  </style>
+
+  <style type="text/css">
+  
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+  }
+  body {
+    background: #fff;
+    font-family: "Source Sans Pro", "Helvetica Neueue", Helvetica, sans;
+    font-weight: 300;
+    font-size: 16px;
+    line-height: 1.6em;
+  }
+  #content {
+    width: 70%;
+    max-width: 850px;
+    float: left;
+    padding: 30px 60px;
+    border-left: 1px solid #ddd;
+  }
+  #sidebar {
+    width: 25%;
+    float: left;
+    padding: 30px;
+    overflow: hidden;
+  }
+  #nav {
+    font-size: 130%;
+    margin: 0 0 15px 0;
+  }
+
+  #top {
+    display: block;
+    position: fixed;
+    bottom: 5px;
+    left: 5px;
+    font-size: .85em;
+    text-transform: uppercase;
+  }
+
+  #footer {
+    font-size: .75em;
+    padding: 5px 30px;
+    border-top: 1px solid #ddd;
+    text-align: right;
+  }
+    #footer p {
+      margin: 0 0 0 30px;
+      display: inline-block;
+    }
+
+  h1, h2, h3, h4, h5 {
+    font-weight: 300;
+  }
+  h1 {
+    font-size: 2.5em;
+    line-height: 1.1em;
+    margin: 0 0 .50em 0;
+  }
+
+  h2 {
+    font-size: 1.75em;
+    margin: 1em 0 .50em 0;
+  }
+
+  h3 {
+    margin: 25px 0 10px 0;
+  }
+
+  h4 {
+    margin: 0;
+    font-size: 105%;
+  }
+
+  a {
+    color: #058;
+    text-decoration: none;
+    transition: color .3s ease-in-out;
+  }
+
+  a:hover {
+    color: #e08524;
+    transition: color .3s ease-in-out;
+  }
+
+  pre, code, .mono, .name {
+    font-family: "Ubuntu Mono", "Cousine", "DejaVu Sans Mono", monospace;
+  }
+
+  .title .name {
+    font-weight: bold;
+  }
+  .section-title {
+    margin-top: 2em;
+  }
+  .ident {
+    color: #900;
+  }
+
+  code {
+    background: #f9f9f9;
+  } 
+
+  pre {
+    background: #fefefe;
+    border: 1px solid #ddd;
+    box-shadow: 2px 2px 0 #f3f3f3;
+    margin: 0 30px;
+    padding: 15px 30px;
+  }
+
+  .codehilite {
+    margin: 0 30px 10px 30px;
+  }
+
+    .codehilite pre {
+      margin: 0;
+    }
+    .codehilite .err { background: #ff3300; color: #fff !important; } 
+
+  table#module-list {
+    font-size: 110%;
+  }
+
+    table#module-list tr td:first-child {
+      padding-right: 10px;
+      white-space: nowrap;
+    }
+
+    table#module-list td {
+      vertical-align: top;
+      padding-bottom: 8px;
+    }
+
+      table#module-list td p {
+        margin: 0 0 7px 0;
+      }
+
+  .def {
+    display: table;
+  }
+
+    .def p {
+      display: table-cell;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    .def p:first-child {
+      white-space: nowrap;
+    }
+
+    .def p:last-child {
+      width: 100%;
+    }
+
+
+  #index {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+  }
+    ul#index .class_name {
+      /* font-size: 110%; */
+      font-weight: bold;
+    }
+    #index ul {
+      margin: 0;
+    }
+
+  .item {
+    margin: 0 0 15px 0;
+  }
+
+    .item .class {
+      margin: 0 0 25px 30px;
+    }
+
+      .item .class ul.class_list {
+        margin: 0 0 20px 0;
+      }
+
+    .item .name {
+      background: #fafafa;
+      margin: 0;
+      font-weight: bold;
+      padding: 5px 10px;
+      border-radius: 3px;
+      display: inline-block;
+      min-width: 40%;
+    }
+      .item .name:hover {
+        background: #f6f6f6;
+      }
+
+    .item .empty_desc {
+      margin: 0 0 5px 0;
+      padding: 0;
+    }
+
+    .item .inheritance {
+      margin: 3px 0 0 30px;
+    }
+
+    .item .inherited {
+      color: #666;
+    }
+
+    .item .desc {
+      padding: 0 8px;
+      margin: 0;
+    }
+
+      .item .desc p {
+        margin: 0 0 10px 0;
+      }
+
+    .source_cont {
+      margin: 0;
+      padding: 0;
+    }
+
+    .source_link a {
+      background: #ffc300;
+      font-weight: 400;
+      font-size: .75em;
+      text-transform: uppercase;
+      color: #fff;
+      text-shadow: 1px 1px 0 #f4b700;
+      
+      padding: 3px 8px;
+      border-radius: 2px;
+      transition: background .3s ease-in-out;
+    }
+      .source_link a:hover {
+        background: #FF7200;
+        text-shadow: none;
+        transition: background .3s ease-in-out;
+      }
+
+    .source {
+      display: none;
+      max-height: 600px;
+      overflow-y: scroll;
+      margin-bottom: 15px;
+    }
+
+      .source .codehilite {
+        margin: 0;
+      }
+
+  .desc h1, .desc h2, .desc h3 {
+    font-size: 100% !important;
+  }
+  .clear {
+    clear: both;
+  }
+
+  @media all and (max-width: 950px) {
+    #sidebar {
+      width: 35%;
+    }
+    #content {
+      width: 65%;
+    }
+  }
+  @media all and (max-width: 650px) {
+    #top {
+      display: none;
+    }
+    #sidebar {
+      float: none;
+      width: auto;
+    }
+    #content {
+      float: none;
+      width: auto;
+      padding: 30px;
+    }
+
+    #index ul {
+      padding: 0;
+      margin-bottom: 15px;
+    }
+    #index ul li {
+      display: inline-block;
+      margin-right: 30px;
+    }
+    #footer {
+      text-align: left;
+    }
+    #footer p {
+      display: block;
+      margin: inherit;
+    }
+  }
+
+  /*****************************/
+
+  </style>
+
+  <style type="text/css">
+  .codehilite .hll { background-color: #ffffcc }
+.codehilite  { background: #f8f8f8; }
+.codehilite .c { color: #408080; font-style: italic } /* Comment */
+.codehilite .err { border: 1px solid #FF0000 } /* Error */
+.codehilite .k { color: #008000; font-weight: bold } /* Keyword */
+.codehilite .o { color: #666666 } /* Operator */
+.codehilite .ch { color: #408080; font-style: italic } /* Comment.Hashbang */
+.codehilite .cm { color: #408080; font-style: italic } /* Comment.Multiline */
+.codehilite .cp { color: #BC7A00 } /* Comment.Preproc */
+.codehilite .cpf { color: #408080; font-style: italic } /* Comment.PreprocFile */
+.codehilite .c1 { color: #408080; font-style: italic } /* Comment.Single */
+.codehilite .cs { color: #408080; font-style: italic } /* Comment.Special */
+.codehilite .gd { color: #A00000 } /* Generic.Deleted */
+.codehilite .ge { font-style: italic } /* Generic.Emph */
+.codehilite .gr { color: #FF0000 } /* Generic.Error */
+.codehilite .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.codehilite .gi { color: #00A000 } /* Generic.Inserted */
+.codehilite .go { color: #888888 } /* Generic.Output */
+.codehilite .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.codehilite .gt { color: #0044DD } /* Generic.Traceback */
+.codehilite .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
+.codehilite .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
+.codehilite .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
+.codehilite .kp { color: #008000 } /* Keyword.Pseudo */
+.codehilite .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
+.codehilite .kt { color: #B00040 } /* Keyword.Type */
+.codehilite .m { color: #666666 } /* Literal.Number */
+.codehilite .s { color: #BA2121 } /* Literal.String */
+.codehilite .na { color: #7D9029 } /* Name.Attribute */
+.codehilite .nb { color: #008000 } /* Name.Builtin */
+.codehilite .nc { color: #0000FF; font-weight: bold } /* Name.Class */
+.codehilite .no { color: #880000 } /* Name.Constant */
+.codehilite .nd { color: #AA22FF } /* Name.Decorator */
+.codehilite .ni { color: #999999; font-weight: bold } /* Name.Entity */
+.codehilite .ne { color: #D2413A; font-weight: bold } /* Name.Exception */
+.codehilite .nf { color: #0000FF } /* Name.Function */
+.codehilite .nl { color: #A0A000 } /* Name.Label */
+.codehilite .nn { color: #0000FF; font-weight: bold } /* Name.Namespace */
+.codehilite .nt { color: #008000; font-weight: bold } /* Name.Tag */
+.codehilite .nv { color: #19177C } /* Name.Variable */
+.codehilite .ow { color: #AA22FF; font-weight: bold } /* Operator.Word */
+.codehilite .w { color: #bbbbbb } /* Text.Whitespace */
+.codehilite .mb { color: #666666 } /* Literal.Number.Bin */
+.codehilite .mf { color: #666666 } /* Literal.Number.Float */
+.codehilite .mh { color: #666666 } /* Literal.Number.Hex */
+.codehilite .mi { color: #666666 } /* Literal.Number.Integer */
+.codehilite .mo { color: #666666 } /* Literal.Number.Oct */
+.codehilite .sa { color: #BA2121 } /* Literal.String.Affix */
+.codehilite .sb { color: #BA2121 } /* Literal.String.Backtick */
+.codehilite .sc { color: #BA2121 } /* Literal.String.Char */
+.codehilite .dl { color: #BA2121 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
+.codehilite .s2 { color: #BA2121 } /* Literal.String.Double */
+.codehilite .se { color: #BB6622; font-weight: bold } /* Literal.String.Escape */
+.codehilite .sh { color: #BA2121 } /* Literal.String.Heredoc */
+.codehilite .si { color: #BB6688; font-weight: bold } /* Literal.String.Interpol */
+.codehilite .sx { color: #008000 } /* Literal.String.Other */
+.codehilite .sr { color: #BB6688 } /* Literal.String.Regex */
+.codehilite .s1 { color: #BA2121 } /* Literal.String.Single */
+.codehilite .ss { color: #19177C } /* Literal.String.Symbol */
+.codehilite .bp { color: #008000 } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #0000FF } /* Name.Function.Magic */
+.codehilite .vc { color: #19177C } /* Name.Variable.Class */
+.codehilite .vg { color: #19177C } /* Name.Variable.Global */
+.codehilite .vi { color: #19177C } /* Name.Variable.Instance */
+.codehilite .vm { color: #19177C } /* Name.Variable.Magic */
+.codehilite .il { color: #666666 } /* Literal.Number.Integer.Long */
+  </style>
+
+  <style type="text/css">
+  
+/* ==========================================================================
+   EXAMPLE Media Queries for Responsive Design.
+   These examples override the primary ('mobile first') styles.
+   Modify as content requires.
+   ========================================================================== */
+
+@media only screen and (min-width: 35em) {
+    /* Style adjustments for viewports that meet the condition */
+}
+
+@media print,
+       (-o-min-device-pixel-ratio: 5/4),
+       (-webkit-min-device-pixel-ratio: 1.25),
+       (min-resolution: 120dpi) {
+    /* Style adjustments for high resolution devices */
+}
+
+/* ==========================================================================
+   Print styles.
+   Inlined to avoid required HTTP connection: h5bp.com/r
+   ========================================================================== */
+
+@media print {
+    * {
+        background: transparent !important;
+        color: #000 !important; /* Black prints faster: h5bp.com/s */
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    a,
+    a:visited {
+        text-decoration: underline;
+    }
+
+    a[href]:after {
+        content: " (" attr(href) ")";
+    }
+
+    abbr[title]:after {
+        content: " (" attr(title) ")";
+    }
+
+    /*
+     * Don't show links for images, or javascript/internal links
+     */
+
+    .ir a:after,
+    a[href^="javascript:"]:after,
+    a[href^="#"]:after {
+        content: "";
+    }
+
+    pre,
+    blockquote {
+        border: 1px solid #999;
+        page-break-inside: avoid;
+    }
+
+    thead {
+        display: table-header-group; /* h5bp.com/t */
+    }
+
+    tr,
+    img {
+        page-break-inside: avoid;
+    }
+
+    img {
+        max-width: 100% !important;
+    }
+
+    @page {
+        margin: 0.5cm;
+    }
+
+    p,
+    h2,
+    h3 {
+        orphans: 3;
+        widows: 3;
+    }
+
+    h2,
+    h3 {
+        page-break-after: avoid;
+    }
+}
+
+  </style>
+
+  <script type="text/javascript">
+  function toggle(id, $link) {
+    $node = document.getElementById(id);
+    if (!$node)
+    return;
+    if (!$node.style.display || $node.style.display == 'none') {
+    $node.style.display = 'block';
+    $link.innerHTML = 'Hide source &nequiv;';
+    } else {
+    $node.style.display = 'none';
+    $link.innerHTML = 'Show source &equiv;';
+    }
+  }
+  </script>
+</head>
+<body>
+<a href="#" id="top">Top</a>
+
+<div id="container">
+    
+  
+  <div id="sidebar">
+    <h1>Index</h1>
+    <ul id="index">
+
+    <li class="set"><h3><a href="#header-functions">Functions</a></h3>
+      
+  <ul>
+    <li class="mono"><a href="#bptool.compute_win_probs">compute_win_probs</a></li>
+    <li class="mono"><a href="#bptool.compute_winner">compute_winner</a></li>
+    <li class="mono"><a href="#bptool.convert_int_to_32_bit_numpy_array">convert_int_to_32_bit_numpy_array</a></li>
+    <li class="mono"><a href="#bptool.create_rs">create_rs</a></li>
+    <li class="mono"><a href="#bptool.dirichlet_multinomial">dirichlet_multinomial</a></li>
+    <li class="mono"><a href="#bptool.generate_nonsample_tally">generate_nonsample_tally</a></li>
+    <li class="mono"><a href="#bptool.preprocess_csv">preprocess_csv</a></li>
+    <li class="mono"><a href="#bptool.print_results">print_results</a></li>
+  </ul>
+
+    </li>
+
+
+    </ul>
+  </div>
+
+    <article id="content">
+      
+  
+
+  
+
+
+  <header id="section-intro">
+  <h1 class="title"><span class="name">bptool</span> module</h1>
+  <p>This module provides routines for computing the winning probabilities
+for various candidates, given audit sample data, using a Bayesian
+model, in a ballot-polling audit of a plurality election.  The
+election may be single-jurisdiction or multi-jurisdiction.  In this
+module we call a jurisdiction a "county" for convenience, although it
+may be a precinct or a state or something else, as long as you can
+sample its collection of paper ballots.</p>
+<p>The Bayesian model uses a prior pseudocount of "+1" for each candidate.</p>
+<p>If this module is imported, rather than used stand-alone, then the procedure
+    compute_win_probs 
+can compute the desired probability of each candidate winning a full recount,
+given sample tallies for each county.</p>
+<p>For command-line usage, there are really two modes:</p>
+<p>(1) For single-county usage, give a command like:
+        python bptool.py 10000 60 50 30
+    where
+        10000 is the total number of votes cast in the county
+        60 50 30  are the votes seen for each candidate in the auditing so far</p>
+<p>(2) For multiple-county usage, give a command like
+        python bptool.py --path_to_csv test.csv
+    where test.csv is a file like:
+        county name, total votes, Alice, Bob
+        1, 1000, 30, 15
+        2, 2000, 40, 50
+    with one header line, then one line per county.  The field names
+    "county name" and "total votes" are required; the candidate names are
+    the candidate names for the contest being audited.</p>
+<p>There are optional parameters as well, to see the documentation of them, do
+    python bptool.py --h</p>
+  
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-bptool', this);">Show source &equiv;</a></p>
+  <div id="source-bptool" class="source">
+    <div class="codehilite"><pre><span></span><span class="c1"># bptool.py</span>
+<span class="c1"># Authors: Ronald L. Rivest, Mayuri Sridhar, Zara A Perumal</span>
+<span class="c1"># April 19, 2018</span>
+<span class="c1"># python3</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This module provides routines for computing the winning probabilities</span>
+<span class="sd">for various candidates, given audit sample data, using a Bayesian</span>
+<span class="sd">model, in a ballot-polling audit of a plurality election.  The</span>
+<span class="sd">election may be single-jurisdiction or multi-jurisdiction.  In this</span>
+<span class="sd">module we call a jurisdiction a &quot;county&quot; for convenience, although it</span>
+<span class="sd">may be a precinct or a state or something else, as long as you can</span>
+<span class="sd">sample its collection of paper ballots.</span>
+
+<span class="sd">The Bayesian model uses a prior pseudocount of &quot;+1&quot; for each candidate.</span>
+
+<span class="sd">If this module is imported, rather than used stand-alone, then the procedure</span>
+<span class="sd">    compute_win_probs </span>
+<span class="sd">can compute the desired probability of each candidate winning a full recount,</span>
+<span class="sd">given sample tallies for each county.</span>
+
+<span class="sd">For command-line usage, there are really two modes:</span>
+
+<span class="sd">(1) For single-county usage, give a command like:</span>
+<span class="sd">        python bptool.py 10000 60 50 30</span>
+<span class="sd">    where</span>
+<span class="sd">        10000 is the total number of votes cast in the county</span>
+<span class="sd">        60 50 30  are the votes seen for each candidate in the auditing so far</span>
+
+<span class="sd">(2) For multiple-county usage, give a command like</span>
+<span class="sd">        python bptool.py --path_to_csv test.csv</span>
+<span class="sd">    where test.csv is a file like:</span>
+<span class="sd">        county name, total votes, Alice, Bob</span>
+<span class="sd">        1, 1000, 30, 15</span>
+<span class="sd">        2, 2000, 40, 50</span>
+<span class="sd">    with one header line, then one line per county.  The field names</span>
+<span class="sd">    &quot;county name&quot; and &quot;total votes&quot; are required; the candidate names are</span>
+<span class="sd">    the candidate names for the contest being audited.</span>
+
+<span class="sd">There are optional parameters as well, to see the documentation of them, do</span>
+<span class="sd">    python bptool.py --h</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="kn">import</span> <span class="nn">argparse</span>
+
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">import</span> <span class="nn">csv</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="c1">##############################################################################</span>
+<span class="c1">## Random number generation</span>
+<span class="c1">##############################################################################</span>
+
+<span class="c1"># This function is taken from audit-lab directly.</span>
+<span class="k">def</span> <span class="nf">convert_int_to_32_bit_numpy_array</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert value v, which should be an arbitrarily large python integer</span>
+<span class="sd">    (or convertible to one) to a numpy array of 32-bit values,</span>
+<span class="sd">    since this format is needed to initialize a numpy.random.RandomState</span>
+<span class="sd">    object.  More precisely, the result is a numpy array of type int64,</span>
+<span class="sd">    but each value is between 0 and 2**32-1, inclusive.</span>
+
+<span class="sd">    Example: input 2**64 + 5 yields np.array([5, 0, 1], dtype=int)</span>
+
+<span class="sd">    Input Parameters:</span>
+<span class="sd">    </span>
+<span class="sd">    -v is an integer, representing the audit seed that&#39;s being</span>
+<span class="sd">    passed in. We expect v to be non-negative.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+
+<span class="sd">    -numpy array created deterministically from v that will</span>
+<span class="sd">    be used to initialize the Numpy RandomState.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">v</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">((</span><span class="s2">&quot;convert_int_to_32_bit_numpy_array: &quot;</span>
+                          <span class="s2">&quot;{} is not a nonnegative integer, &quot;</span>
+                          <span class="s2">&quot;or convertible to one.&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+    <span class="n">v_parts</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">radix</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">32</span>
+    <span class="k">while</span> <span class="n">v</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">v_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span> <span class="o">%</span> <span class="n">radix</span><span class="p">)</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">v</span> <span class="o">//</span> <span class="n">radix</span>
+    <span class="c1"># note: v_parts will be empty list if v==0, that is OK</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">v_parts</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">create_rs</span><span class="p">(</span><span class="n">seed</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create and return a Numpy RandomState object for a given seed. </span>
+<span class="sd">    The input seed should be a python integer, arbitrarily large.</span>
+<span class="sd">    The purpose of this routine is to make all the audit actions reproducible.</span>
+
+<span class="sd">    Input Parameters:</span>
+
+<span class="sd">    -seed is an integer or None. Assuming that it isn&#39;t None, we</span>
+<span class="sd">    convert it into a Numpy Array.</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">    -a Numpy RandomState object, based on the seed, or the clock</span>
+<span class="sd">    time if the seed is None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">seed</span> <span class="o">=</span> <span class="n">convert_int_to_32_bit_numpy_array</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+
+
+<span class="c1">##############################################################################</span>
+<span class="c1">## Main computational routines</span>
+<span class="c1">##############################################################################</span>
+
+<span class="k">def</span> <span class="nf">dirichlet_multinomial</span><span class="p">(</span><span class="n">sample_tally</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">,</span> <span class="n">rs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a sample according to the Dirichlet multinomial distribution,</span>
+<span class="sd">    given a sample tally, the number of votes in the election,</span>
+<span class="sd">    and a random state. There is an additional pseudocount of</span>
+<span class="sd">    one vote per candidate in this simulation.</span>
+
+<span class="sd">    Input Parameters:</span>
+
+<span class="sd">    -sample_tally is a list of integers, where the i&#39;th index</span>
+<span class="sd">    in sample_tally corresponds to the number of votes that candidate</span>
+<span class="sd">    i received in the sample.</span>
+
+<span class="sd">    -total_num_votes is an integer representing the number of</span>
+<span class="sd">    ballots that were cast in this election.</span>
+
+<span class="sd">    -rs is a Numpy RandomState object that is used for any</span>
+<span class="sd">    random functions in the simulation of the remaining votes. In particular,</span>
+<span class="sd">    the gamma functions are made deterministic using this state.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+
+<span class="sd">    -multinomial_sample is a list of integers, which sums up</span>
+<span class="sd">    to the total_num_votes - sample_size. The i&#39;th index represents the</span>
+<span class="sd">    simulated number of votes for candidate i in the remaining, unsampled</span>
+<span class="sd">    votes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">sample_size</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">sample_tally</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">sample_size</span> <span class="o">&gt;</span> <span class="n">total_num_votes</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;total_num_votes {} less than sample_size {}.&quot;</span>
+                         <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">total_num_votes</span><span class="p">,</span> <span class="n">sample_size</span><span class="p">))</span>
+
+    <span class="n">nonsample_size</span> <span class="o">=</span> <span class="n">total_num_votes</span> <span class="o">-</span> <span class="n">sample_size</span>
+
+    <span class="n">pseudocount_for_prior</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">sample_with_prior</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">sample_tally</span><span class="p">)</span>
+    <span class="n">sample_with_prior</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="o">+</span> <span class="n">pseudocount_for_prior</span>
+                         <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">sample_with_prior</span><span class="p">]</span>
+
+    <span class="n">gamma_sample</span> <span class="o">=</span> <span class="p">[</span><span class="n">rs</span><span class="o">.</span><span class="n">gamma</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">sample_with_prior</span><span class="p">]</span>
+    <span class="n">gamma_sample_sum</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">gamma_sample</span><span class="p">))</span>
+    <span class="n">gamma_sample</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="o">/</span> <span class="n">gamma_sample_sum</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">gamma_sample</span><span class="p">]</span>
+
+    <span class="n">multinomial_sample</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="n">multinomial</span><span class="p">(</span><span class="n">nonsample_size</span><span class="p">,</span> <span class="n">gamma_sample</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">multinomial_sample</span>
+
+
+<span class="k">def</span> <span class="nf">generate_nonsample_tally</span><span class="p">(</span><span class="n">sample_tally</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">,</span> <span class="n">seed</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given a sample_tally, the total number of votes in an election, and a seed,</span>
+<span class="sd">    generate the nonsample tally in the election using the Dirichlet multinomial</span>
+<span class="sd">    distribution.</span>
+
+<span class="sd">    Input Parameters:</span>
+
+<span class="sd">    -sample_tally is a list of integers, where the i&#39;th index</span>
+<span class="sd">    in sample_tally corresponds to the number of votes that candidate</span>
+<span class="sd">    i received in the sample.</span>
+
+<span class="sd">    -total_num_votes is an integer representing the number of</span>
+<span class="sd">    ballots that were cast in this election.</span>
+
+<span class="sd">    -seed is an integer or None. Assuming that it isn&#39;t None, we</span>
+<span class="sd">    use it to seed the random state for the audit.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+
+<span class="sd">    -nonsample_tally is list of integers, which sums up</span>
+<span class="sd">    to the total_num_votes - sample_size. The i&#39;th index represents the</span>
+<span class="sd">    simulated number of votes for candidate i in the remaining, unsampled</span>
+<span class="sd">    votes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">rs</span> <span class="o">=</span> <span class="n">create_rs</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">nonsample_tally</span> <span class="o">=</span> <span class="n">dirichlet_multinomial</span><span class="p">(</span><span class="n">sample_tally</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">,</span> <span class="n">rs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">nonsample_tally</span>
+
+
+<span class="k">def</span> <span class="nf">compute_winner</span><span class="p">(</span><span class="n">sample_tallies</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">,</span> <span class="n">seed</span><span class="p">,</span> <span class="n">pretty_print</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given a list of sample tallies (one sample tally per county)</span>
+<span class="sd">    a list giving the total number of votes cast in each county, </span>
+<span class="sd">    and a random seed (an integer)</span>
+<span class="sd">    compute the winner in a single simulation. </span>
+<span class="sd">    For each county, we use the Dirichlet-Multinomial distribution to generate</span>
+<span class="sd">    a nonsample tally. Then, we sum over all the counties to produce our</span>
+<span class="sd">    final tally and calculate the predicted winner over all the counties in</span>
+<span class="sd">    the election.</span>
+
+<span class="sd">    Input Parameters:</span>
+
+<span class="sd">    -sample_tallies is a list of lists. Each list represents the sample tally</span>
+<span class="sd">    for a given county. So, sample_tallies[i] represents the tally for county</span>
+<span class="sd">    i. Then, sample_tallies[i][j] represents the number of votes candidate</span>
+<span class="sd">    j receives in county i.</span>
+
+<span class="sd">    -total_num_votes is an integer representing the number of</span>
+<span class="sd">    ballots that were cast in this election.</span>
+
+<span class="sd">    -seed is an integer or None. Assuming that it isn&#39;t None, we</span>
+<span class="sd">    use it to seed the random state for the audit.</span>
+
+<span class="sd">    -pretty_print is a Boolean, which defaults to False. When it&#39;s set to</span>
+<span class="sd">    True, we print the winning candidate, the number of votes they have</span>
+<span class="sd">    received and the final vote tally for all the candidates.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+
+<span class="sd">    -winner is an integer, representing the index of the candidate who</span>
+<span class="sd">    won the election.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">final_tally</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sample_tally</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sample_tallies</span><span class="p">):</span>   <span class="c1"># loop over counties</span>
+        <span class="n">nonsample_tally</span> <span class="o">=</span> <span class="n">generate_nonsample_tally</span><span class="p">(</span>
+            <span class="n">sample_tally</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">seed</span><span class="p">)</span>
+        <span class="n">final_county_tally</span> <span class="o">=</span> <span class="p">[</span><span class="nb">sum</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                              <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">sample_tally</span><span class="p">,</span> <span class="n">nonsample_tally</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">final_tally</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">final_tally</span> <span class="o">=</span> <span class="n">final_county_tally</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">final_tally</span> <span class="o">=</span> <span class="p">[</span><span class="nb">sum</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                           <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">final_tally</span><span class="p">,</span> <span class="n">final_county_tally</span><span class="p">)]</span>
+    <span class="n">winner</span> <span class="o">=</span> <span class="n">final_tally</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">final_tally</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">pretty_print</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Candidate {} is the winner with {} votes. &#39;</span>
+              <span class="s1">&#39;The final vote tally for all the candidates was {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                  <span class="n">winner</span><span class="p">,</span> <span class="n">final_tally</span><span class="p">[</span><span class="n">winner</span><span class="p">],</span> <span class="n">final_tally</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">winner</span>
+
+
+<span class="k">def</span> <span class="nf">compute_win_probs</span><span class="p">(</span><span class="n">sample_tallies</span><span class="p">,</span>
+                      <span class="n">total_num_votes</span><span class="p">,</span>
+                      <span class="n">seed</span><span class="p">,</span>
+                      <span class="n">num_trials</span><span class="p">,</span>
+                      <span class="n">candidate_names</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Runs num_trials simulations of the Bayesian audit to estimate the probability that</span>
+<span class="sd">    each candidate would win a full recount.</span>
+
+<span class="sd">    In particular, we run a single iteration of a Bayesian audit (extend each county&#39;s</span>
+<span class="sd">    sample to simulate all the votes in the county and calculate the overall winner</span>
+<span class="sd">    across counties) num_trials times.</span>
+
+<span class="sd">    Input Parameters:</span>
+
+<span class="sd">    -sample_tallies is a list of lists. Each list represents the sample tally</span>
+<span class="sd">    for a given county. So, sample_tallies[i] represents the tally for county</span>
+<span class="sd">    i. Then, sample_tallies[i][j] represents the number of votes candidate</span>
+<span class="sd">    j receives in county i.</span>
+
+<span class="sd">    -total_num_votes is an integer representing the number of</span>
+<span class="sd">    ballots that were cast in this election.</span>
+
+<span class="sd">    -seed is an integer or None. Assuming that it isn&#39;t None, we</span>
+<span class="sd">    use it to seed the random state for the audit.</span>
+
+<span class="sd">    -num_trials is an integer which represents how many simulations of the Bayesian</span>
+<span class="sd">    audit we run, to estimate the win probabilities of the candidates.</span>
+
+<span class="sd">    -candidate_names is an ordered list of strings, containing the name of</span>
+<span class="sd">    every candidate in the contest we are auditing.</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">    -win_probs is a list of pairs (i, p) where p is the fractional representation of the</span>
+<span class="sd">    number of trials that candidate i has won out of the num_trials simulations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">num_candidates</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidate_names</span><span class="p">)</span>
+    <span class="n">win_count</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">num_candidates</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_trials</span><span class="p">):</span>
+        <span class="c1"># We want a different seed per trial.</span>
+        <span class="c1"># Adding i to seed caused correlations, as numpy apparently</span>
+        <span class="c1"># adds one per trial, so we multiply i by 314...</span>
+        <span class="n">seed_i</span> <span class="o">=</span> <span class="n">seed</span> <span class="o">+</span> <span class="n">i</span><span class="o">*</span><span class="mi">314159265</span>                 
+        <span class="n">winner</span> <span class="o">=</span> <span class="n">compute_winner</span><span class="p">(</span><span class="n">sample_tallies</span><span class="p">,</span>
+                               <span class="n">total_num_votes</span><span class="p">,</span>
+                               <span class="n">seed_i</span><span class="p">)</span>
+        <span class="n">win_count</span><span class="p">[</span><span class="n">winner</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="n">win_probs</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">win_count</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">num_trials</span><span class="p">))</span>
+                 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">win_count</span><span class="p">))]</span>
+    <span class="k">return</span> <span class="n">win_probs</span>
+
+
+<span class="c1">##############################################################################</span>
+<span class="c1">## Routines for command-line interface and file (csv) input</span>
+<span class="c1">##############################################################################</span>
+
+<span class="k">def</span> <span class="nf">print_results</span><span class="p">(</span><span class="n">candidate_names</span><span class="p">,</span> <span class="n">win_probs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given list of candidate_names and win_probs pairs, print summary</span>
+<span class="sd">    of the Bayesian audit simulations.</span>
+
+<span class="sd">    Input Parameters:</span>
+
+<span class="sd">    -candidate_names is an ordered list of strings, containing the name of</span>
+<span class="sd">    every candidate in the contest we are auditing.</span>
+
+<span class="sd">    -win_probs is a list of pairs (i, p) where p is the fractional representation of the</span>
+<span class="sd">    number of trials that candidate i has won out of the num_trials simulations.</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">    -None, but prints a summary of how often each candidate has won in</span>
+<span class="sd">    the simulations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;BPTOOL (version 0.8)&quot;</span><span class="p">)</span>
+
+    <span class="n">want_sorted_results</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="k">if</span> <span class="n">want_sorted_results</span><span class="p">:</span>
+        <span class="n">sorted_win_probs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="n">win_probs</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">tup</span><span class="p">:</span> <span class="n">tup</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">sorted_win_probs</span> <span class="o">=</span> <span class="n">win_probs</span>
+
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;{:&lt;24s} </span><span class="se">\t</span><span class="s2"> {:&lt;s}&quot;</span>
+          <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;Candidate name&quot;</span><span class="p">,</span>
+                  <span class="s2">&quot;Estimated probability of winning a full recount&quot;</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">candidate_index</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="n">sorted_win_probs</span><span class="p">:</span>
+        <span class="n">candidate_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">candidate_names</span><span class="p">[</span><span class="n">candidate_index</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot; {:&lt;24s} </span><span class="se">\t</span><span class="s2">  {:6.2f} %  &quot;</span>
+              <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">candidate_name</span><span class="p">,</span> <span class="mi">100</span><span class="o">*</span><span class="n">prob</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">preprocess_csv</span><span class="p">(</span><span class="n">path_to_csv</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Preprocess a CSV file into the correct format for our</span>
+<span class="sd">    sample tallies. In particular, we ignore the county name column</span>
+<span class="sd">    and summarize the relevant information about the sample tallies</span>
+<span class="sd">    in each county, the total number of votes in each county, and</span>
+<span class="sd">    the candidate names.</span>
+
+<span class="sd">    Input Parameters:</span>
+
+<span class="sd">    -path_to_csv is a string, representing the full path to the CSV</span>
+<span class="sd">    file, containing sample tallies.</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">    -sample_tallies is a list of lists. Each list represents the sample tally</span>
+<span class="sd">    for a given county. So, sample_tallies[i] represents the tally for county</span>
+<span class="sd">    i. Then, sample_tallies[i][j] represents the number of votes candidate</span>
+<span class="sd">    j receives in county i.</span>
+
+<span class="sd">    -total_num_votes is an integer representing the number of</span>
+<span class="sd">    ballots that were cast in this election.</span>
+
+<span class="sd">    -candidate_names is an ordered list of strings, containing the name of</span>
+<span class="sd">    every candidate in the contest we are auditing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path_to_csv</span><span class="p">)</span> <span class="k">as</span> <span class="n">csvfile</span><span class="p">:</span>
+        <span class="n">sample_tallies</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">total_num_votes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictReader</span><span class="p">(</span><span class="n">csvfile</span><span class="p">)</span>
+        <span class="n">candidate_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">reader</span><span class="o">.</span><span class="n">fieldnames</span>
+                           <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span>
+                           <span class="p">[</span><span class="s2">&quot;county name&quot;</span><span class="p">,</span> <span class="s2">&quot;total votes&quot;</span><span class="p">]]</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">reader</span><span class="p">:</span>
+            <span class="n">sample_tally</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">row</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;county name&quot;</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;total votes&quot;</span><span class="p">:</span>
+                    <span class="n">total_num_votes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">key</span><span class="p">]))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+                    <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">count</span> 
+                    <span class="n">sample_tally</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">count</span><span class="p">)</span>
+            <span class="n">sample_tallies</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sample_tally</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sample_tally</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sample_tallies</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">sample_tally</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">total_num_votes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">sample_tallies</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">,</span> <span class="n">candidate_names</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;Bayesian Audit Process For A Single Contest &#39;</span>
+                                                 <span class="s1">&#39;Across One or More Counties&#39;</span><span class="p">)</span>
+
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;total_num_votes&quot;</span><span class="p">,</span>
+                        <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;?&quot;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;(Optional: for single-county audits:) The total number of votes&quot;</span>
+                             <span class="s2">&quot;(including the already audited ones) &quot;</span>
+                             <span class="s2">&quot;that were cast in the election.&quot;</span><span class="p">)</span>
+
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;single_county_tally&quot;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;(Optional: for single-county audits:) the tally given as space separated numbers,&quot;</span>
+                             <span class="s2">&quot;e.g.  5 30 25&quot;</span><span class="p">,</span>
+                        <span class="n">nargs</span><span class="o">=</span><span class="s2">&quot;*&quot;</span><span class="p">,</span>
+                        <span class="n">default</span><span class="o">=</span><span class="p">[],</span>
+                        <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--path_to_csv&quot;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;If the election spans multiple counties, &quot;</span>
+                             <span class="s2">&quot;the sample tallies should be given in a csv file.&quot;</span> 
+                             <span class="s2">&quot;Give here the csv file pathname as an argument. &quot;</span>
+                             <span class="s2">&quot;In the header row, one of the column names &quot;</span>
+                             <span class="s2">&quot;of the csv file must be Total Votes and another can be &quot;</span>
+                             <span class="s2">&quot;County Name. Other columns are the names &quot;</span>
+                             <span class="s2">&quot;or identifiers for candidates.&quot;</span><span class="p">)</span>
+
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--audit_seed&quot;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;For reproducibility, we provide the option to seed the &quot;</span>
+                             <span class="s2">&quot;randomness in the audit. If the same seed is provided, the audit &quot;</span>
+                             <span class="s2">&quot;will return the same results.&quot;</span><span class="p">,</span>
+                        <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+                        <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--num_trials&quot;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Bayesian audits work by simulating the data &quot;</span>
+                             <span class="s2">&quot;which hasn&#39;t been sampled to estimate the chance that &quot;</span>
+                             <span class="s2">&quot;each candidate would win a full hand recount. &quot;</span>
+                             <span class="s2">&quot;This argument specifies how many trials are done to &quot;</span>
+                             <span class="s2">&quot;compute these estimates.&quot;</span><span class="p">,</span>
+                        <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+                        <span class="n">default</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>
+
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">path_to_csv</span><span class="o">==</span><span class="bp">None</span> <span class="ow">and</span> <span class="n">args</span><span class="o">.</span><span class="n">total_num_votes</span><span class="o">==</span><span class="bp">None</span><span class="p">:</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">print_help</span><span class="p">()</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">path_to_csv</span><span class="p">:</span>
+        <span class="c1"># if sample tallies are in CSV file read that</span>
+        <span class="n">sample_tallies</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">,</span> <span class="n">candidate_names</span> <span class="o">=</span> \
+            <span class="n">preprocess_csv</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">path_to_csv</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># otherwise extract desired data from command line</span>
+        <span class="n">total_num_votes</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">total_num_votes</span><span class="p">)]</span>
+        <span class="n">sample_tallies</span> <span class="o">=</span> <span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">single_county_tally</span><span class="p">]</span>
+        <span class="n">candidate_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sample_tallies</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="n">win_probs</span> <span class="o">=</span> <span class="n">compute_win_probs</span><span class="p">(</span>
+                    <span class="n">sample_tallies</span><span class="p">,</span>
+                    <span class="n">total_num_votes</span><span class="p">,</span>
+                    <span class="n">args</span><span class="o">.</span><span class="n">audit_seed</span><span class="p">,</span>
+                    <span class="n">args</span><span class="o">.</span><span class="n">num_trials</span><span class="p">,</span>
+                    <span class="n">candidate_names</span><span class="p">)</span>
+    <span class="n">print_results</span><span class="p">(</span><span class="n">candidate_names</span><span class="p">,</span> <span class="n">win_probs</span><span class="p">)</span>
+</pre></div>
+
+  </div>
+
+  </header>
+
+  <section id="section-items">
+
+    <h2 class="section-title" id="header-functions">Functions</h2>
+      
+  <div class="item">
+    <div class="name def" id="bptool.compute_win_probs">
+    <p>def <span class="ident">compute_win_probs</span>(</p><p>sample_tallies, total_num_votes, seed, num_trials, candidate_names)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Runs num_trials simulations of the Bayesian audit to estimate the probability that
+each candidate would win a full recount.</p>
+<p>In particular, we run a single iteration of a Bayesian audit (extend each county's
+sample to simulate all the votes in the county and calculate the overall winner
+across counties) num_trials times.</p>
+<p>Input Parameters:</p>
+<p>-sample_tallies is a list of lists. Each list represents the sample tally
+for a given county. So, sample_tallies[i] represents the tally for county
+i. Then, sample_tallies[i][j] represents the number of votes candidate
+j receives in county i.</p>
+<p>-total_num_votes is an integer representing the number of
+ballots that were cast in this election.</p>
+<p>-seed is an integer or None. Assuming that it isn't None, we
+use it to seed the random state for the audit.</p>
+<p>-num_trials is an integer which represents how many simulations of the Bayesian
+audit we run, to estimate the win probabilities of the candidates.</p>
+<p>-candidate_names is an ordered list of strings, containing the name of
+every candidate in the contest we are auditing.</p>
+<p>Returns:</p>
+<p>-win_probs is a list of pairs (i, p) where p is the fractional representation of the
+number of trials that candidate i has won out of the num_trials simulations.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-bptool.compute_win_probs', this);">Show source &equiv;</a></p>
+  <div id="source-bptool.compute_win_probs" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">compute_win_probs</span><span class="p">(</span><span class="n">sample_tallies</span><span class="p">,</span>
+                      <span class="n">total_num_votes</span><span class="p">,</span>
+                      <span class="n">seed</span><span class="p">,</span>
+                      <span class="n">num_trials</span><span class="p">,</span>
+                      <span class="n">candidate_names</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Runs num_trials simulations of the Bayesian audit to estimate the probability that</span>
+<span class="sd">    each candidate would win a full recount.</span>
+
+<span class="sd">    In particular, we run a single iteration of a Bayesian audit (extend each county&#39;s</span>
+<span class="sd">    sample to simulate all the votes in the county and calculate the overall winner</span>
+<span class="sd">    across counties) num_trials times.</span>
+
+<span class="sd">    Input Parameters:</span>
+
+<span class="sd">    -sample_tallies is a list of lists. Each list represents the sample tally</span>
+<span class="sd">    for a given county. So, sample_tallies[i] represents the tally for county</span>
+<span class="sd">    i. Then, sample_tallies[i][j] represents the number of votes candidate</span>
+<span class="sd">    j receives in county i.</span>
+
+<span class="sd">    -total_num_votes is an integer representing the number of</span>
+<span class="sd">    ballots that were cast in this election.</span>
+
+<span class="sd">    -seed is an integer or None. Assuming that it isn&#39;t None, we</span>
+<span class="sd">    use it to seed the random state for the audit.</span>
+
+<span class="sd">    -num_trials is an integer which represents how many simulations of the Bayesian</span>
+<span class="sd">    audit we run, to estimate the win probabilities of the candidates.</span>
+
+<span class="sd">    -candidate_names is an ordered list of strings, containing the name of</span>
+<span class="sd">    every candidate in the contest we are auditing.</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">    -win_probs is a list of pairs (i, p) where p is the fractional representation of the</span>
+<span class="sd">    number of trials that candidate i has won out of the num_trials simulations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">num_candidates</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidate_names</span><span class="p">)</span>
+    <span class="n">win_count</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">num_candidates</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_trials</span><span class="p">):</span>
+        <span class="c1"># We want a different seed per trial.</span>
+        <span class="c1"># Adding i to seed caused correlations, as numpy apparently</span>
+        <span class="c1"># adds one per trial, so we multiply i by 314...</span>
+        <span class="n">seed_i</span> <span class="o">=</span> <span class="n">seed</span> <span class="o">+</span> <span class="n">i</span><span class="o">*</span><span class="mi">314159265</span>                 
+        <span class="n">winner</span> <span class="o">=</span> <span class="n">compute_winner</span><span class="p">(</span><span class="n">sample_tallies</span><span class="p">,</span>
+                               <span class="n">total_num_votes</span><span class="p">,</span>
+                               <span class="n">seed_i</span><span class="p">)</span>
+        <span class="n">win_count</span><span class="p">[</span><span class="n">winner</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="n">win_probs</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">win_count</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">num_trials</span><span class="p">))</span>
+                 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">win_count</span><span class="p">))]</span>
+    <span class="k">return</span> <span class="n">win_probs</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="bptool.compute_winner">
+    <p>def <span class="ident">compute_winner</span>(</p><p>sample_tallies, total_num_votes, seed, pretty_print=False)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Given a list of sample tallies (one sample tally per county)
+a list giving the total number of votes cast in each county, 
+and a random seed (an integer)
+compute the winner in a single simulation. 
+For each county, we use the Dirichlet-Multinomial distribution to generate
+a nonsample tally. Then, we sum over all the counties to produce our
+final tally and calculate the predicted winner over all the counties in
+the election.</p>
+<p>Input Parameters:</p>
+<p>-sample_tallies is a list of lists. Each list represents the sample tally
+for a given county. So, sample_tallies[i] represents the tally for county
+i. Then, sample_tallies[i][j] represents the number of votes candidate
+j receives in county i.</p>
+<p>-total_num_votes is an integer representing the number of
+ballots that were cast in this election.</p>
+<p>-seed is an integer or None. Assuming that it isn't None, we
+use it to seed the random state for the audit.</p>
+<p>-pretty_print is a Boolean, which defaults to False. When it's set to
+True, we print the winning candidate, the number of votes they have
+received and the final vote tally for all the candidates.</p>
+<p>Returns:</p>
+<p>-winner is an integer, representing the index of the candidate who
+won the election.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-bptool.compute_winner', this);">Show source &equiv;</a></p>
+  <div id="source-bptool.compute_winner" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">compute_winner</span><span class="p">(</span><span class="n">sample_tallies</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">,</span> <span class="n">seed</span><span class="p">,</span> <span class="n">pretty_print</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given a list of sample tallies (one sample tally per county)</span>
+<span class="sd">    a list giving the total number of votes cast in each county, </span>
+<span class="sd">    and a random seed (an integer)</span>
+<span class="sd">    compute the winner in a single simulation. </span>
+<span class="sd">    For each county, we use the Dirichlet-Multinomial distribution to generate</span>
+<span class="sd">    a nonsample tally. Then, we sum over all the counties to produce our</span>
+<span class="sd">    final tally and calculate the predicted winner over all the counties in</span>
+<span class="sd">    the election.</span>
+
+<span class="sd">    Input Parameters:</span>
+
+<span class="sd">    -sample_tallies is a list of lists. Each list represents the sample tally</span>
+<span class="sd">    for a given county. So, sample_tallies[i] represents the tally for county</span>
+<span class="sd">    i. Then, sample_tallies[i][j] represents the number of votes candidate</span>
+<span class="sd">    j receives in county i.</span>
+
+<span class="sd">    -total_num_votes is an integer representing the number of</span>
+<span class="sd">    ballots that were cast in this election.</span>
+
+<span class="sd">    -seed is an integer or None. Assuming that it isn&#39;t None, we</span>
+<span class="sd">    use it to seed the random state for the audit.</span>
+
+<span class="sd">    -pretty_print is a Boolean, which defaults to False. When it&#39;s set to</span>
+<span class="sd">    True, we print the winning candidate, the number of votes they have</span>
+<span class="sd">    received and the final vote tally for all the candidates.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+
+<span class="sd">    -winner is an integer, representing the index of the candidate who</span>
+<span class="sd">    won the election.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">final_tally</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sample_tally</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sample_tallies</span><span class="p">):</span>   <span class="c1"># loop over counties</span>
+        <span class="n">nonsample_tally</span> <span class="o">=</span> <span class="n">generate_nonsample_tally</span><span class="p">(</span>
+            <span class="n">sample_tally</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">seed</span><span class="p">)</span>
+        <span class="n">final_county_tally</span> <span class="o">=</span> <span class="p">[</span><span class="nb">sum</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                              <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">sample_tally</span><span class="p">,</span> <span class="n">nonsample_tally</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">final_tally</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">final_tally</span> <span class="o">=</span> <span class="n">final_county_tally</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">final_tally</span> <span class="o">=</span> <span class="p">[</span><span class="nb">sum</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                           <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">final_tally</span><span class="p">,</span> <span class="n">final_county_tally</span><span class="p">)]</span>
+    <span class="n">winner</span> <span class="o">=</span> <span class="n">final_tally</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">final_tally</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">pretty_print</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Candidate {} is the winner with {} votes. &#39;</span>
+              <span class="s1">&#39;The final vote tally for all the candidates was {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                  <span class="n">winner</span><span class="p">,</span> <span class="n">final_tally</span><span class="p">[</span><span class="n">winner</span><span class="p">],</span> <span class="n">final_tally</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">winner</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="bptool.convert_int_to_32_bit_numpy_array">
+    <p>def <span class="ident">convert_int_to_32_bit_numpy_array</span>(</p><p>v)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Convert value v, which should be an arbitrarily large python integer
+(or convertible to one) to a numpy array of 32-bit values,
+since this format is needed to initialize a numpy.random.RandomState
+object.  More precisely, the result is a numpy array of type int64,
+but each value is between 0 and 2**32-1, inclusive.</p>
+<p>Example: input 2**64 + 5 yields np.array([5, 0, 1], dtype=int)</p>
+<p>Input Parameters:</p>
+<p>-v is an integer, representing the audit seed that's being
+passed in. We expect v to be non-negative.</p>
+<p>Returns:</p>
+<p>-numpy array created deterministically from v that will
+be used to initialize the Numpy RandomState.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-bptool.convert_int_to_32_bit_numpy_array', this);">Show source &equiv;</a></p>
+  <div id="source-bptool.convert_int_to_32_bit_numpy_array" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">convert_int_to_32_bit_numpy_array</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert value v, which should be an arbitrarily large python integer</span>
+<span class="sd">    (or convertible to one) to a numpy array of 32-bit values,</span>
+<span class="sd">    since this format is needed to initialize a numpy.random.RandomState</span>
+<span class="sd">    object.  More precisely, the result is a numpy array of type int64,</span>
+<span class="sd">    but each value is between 0 and 2**32-1, inclusive.</span>
+
+<span class="sd">    Example: input 2**64 + 5 yields np.array([5, 0, 1], dtype=int)</span>
+
+<span class="sd">    Input Parameters:</span>
+<span class="sd">    </span>
+<span class="sd">    -v is an integer, representing the audit seed that&#39;s being</span>
+<span class="sd">    passed in. We expect v to be non-negative.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+
+<span class="sd">    -numpy array created deterministically from v that will</span>
+<span class="sd">    be used to initialize the Numpy RandomState.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">v</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">((</span><span class="s2">&quot;convert_int_to_32_bit_numpy_array: &quot;</span>
+                          <span class="s2">&quot;{} is not a nonnegative integer, &quot;</span>
+                          <span class="s2">&quot;or convertible to one.&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+    <span class="n">v_parts</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">radix</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">32</span>
+    <span class="k">while</span> <span class="n">v</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">v_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span> <span class="o">%</span> <span class="n">radix</span><span class="p">)</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">v</span> <span class="o">//</span> <span class="n">radix</span>
+    <span class="c1"># note: v_parts will be empty list if v==0, that is OK</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">v_parts</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="bptool.create_rs">
+    <p>def <span class="ident">create_rs</span>(</p><p>seed)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Create and return a Numpy RandomState object for a given seed. 
+The input seed should be a python integer, arbitrarily large.
+The purpose of this routine is to make all the audit actions reproducible.</p>
+<p>Input Parameters:</p>
+<p>-seed is an integer or None. Assuming that it isn't None, we
+convert it into a Numpy Array.</p>
+<p>Returns:</p>
+<p>-a Numpy RandomState object, based on the seed, or the clock
+time if the seed is None.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-bptool.create_rs', this);">Show source &equiv;</a></p>
+  <div id="source-bptool.create_rs" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">create_rs</span><span class="p">(</span><span class="n">seed</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create and return a Numpy RandomState object for a given seed. </span>
+<span class="sd">    The input seed should be a python integer, arbitrarily large.</span>
+<span class="sd">    The purpose of this routine is to make all the audit actions reproducible.</span>
+
+<span class="sd">    Input Parameters:</span>
+
+<span class="sd">    -seed is an integer or None. Assuming that it isn&#39;t None, we</span>
+<span class="sd">    convert it into a Numpy Array.</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">    -a Numpy RandomState object, based on the seed, or the clock</span>
+<span class="sd">    time if the seed is None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">seed</span> <span class="o">=</span> <span class="n">convert_int_to_32_bit_numpy_array</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="bptool.dirichlet_multinomial">
+    <p>def <span class="ident">dirichlet_multinomial</span>(</p><p>sample_tally, total_num_votes, rs)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Return a sample according to the Dirichlet multinomial distribution,
+given a sample tally, the number of votes in the election,
+and a random state. There is an additional pseudocount of
+one vote per candidate in this simulation.</p>
+<p>Input Parameters:</p>
+<p>-sample_tally is a list of integers, where the i'th index
+in sample_tally corresponds to the number of votes that candidate
+i received in the sample.</p>
+<p>-total_num_votes is an integer representing the number of
+ballots that were cast in this election.</p>
+<p>-rs is a Numpy RandomState object that is used for any
+random functions in the simulation of the remaining votes. In particular,
+the gamma functions are made deterministic using this state.</p>
+<p>Returns:</p>
+<p>-multinomial_sample is a list of integers, which sums up
+to the total_num_votes - sample_size. The i'th index represents the
+simulated number of votes for candidate i in the remaining, unsampled
+votes.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-bptool.dirichlet_multinomial', this);">Show source &equiv;</a></p>
+  <div id="source-bptool.dirichlet_multinomial" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">dirichlet_multinomial</span><span class="p">(</span><span class="n">sample_tally</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">,</span> <span class="n">rs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a sample according to the Dirichlet multinomial distribution,</span>
+<span class="sd">    given a sample tally, the number of votes in the election,</span>
+<span class="sd">    and a random state. There is an additional pseudocount of</span>
+<span class="sd">    one vote per candidate in this simulation.</span>
+
+<span class="sd">    Input Parameters:</span>
+
+<span class="sd">    -sample_tally is a list of integers, where the i&#39;th index</span>
+<span class="sd">    in sample_tally corresponds to the number of votes that candidate</span>
+<span class="sd">    i received in the sample.</span>
+
+<span class="sd">    -total_num_votes is an integer representing the number of</span>
+<span class="sd">    ballots that were cast in this election.</span>
+
+<span class="sd">    -rs is a Numpy RandomState object that is used for any</span>
+<span class="sd">    random functions in the simulation of the remaining votes. In particular,</span>
+<span class="sd">    the gamma functions are made deterministic using this state.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+
+<span class="sd">    -multinomial_sample is a list of integers, which sums up</span>
+<span class="sd">    to the total_num_votes - sample_size. The i&#39;th index represents the</span>
+<span class="sd">    simulated number of votes for candidate i in the remaining, unsampled</span>
+<span class="sd">    votes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">sample_size</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">sample_tally</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">sample_size</span> <span class="o">&gt;</span> <span class="n">total_num_votes</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;total_num_votes {} less than sample_size {}.&quot;</span>
+                         <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">total_num_votes</span><span class="p">,</span> <span class="n">sample_size</span><span class="p">))</span>
+
+    <span class="n">nonsample_size</span> <span class="o">=</span> <span class="n">total_num_votes</span> <span class="o">-</span> <span class="n">sample_size</span>
+
+    <span class="n">pseudocount_for_prior</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">sample_with_prior</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">sample_tally</span><span class="p">)</span>
+    <span class="n">sample_with_prior</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="o">+</span> <span class="n">pseudocount_for_prior</span>
+                         <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">sample_with_prior</span><span class="p">]</span>
+
+    <span class="n">gamma_sample</span> <span class="o">=</span> <span class="p">[</span><span class="n">rs</span><span class="o">.</span><span class="n">gamma</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">sample_with_prior</span><span class="p">]</span>
+    <span class="n">gamma_sample_sum</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">gamma_sample</span><span class="p">))</span>
+    <span class="n">gamma_sample</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="o">/</span> <span class="n">gamma_sample_sum</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">gamma_sample</span><span class="p">]</span>
+
+    <span class="n">multinomial_sample</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="n">multinomial</span><span class="p">(</span><span class="n">nonsample_size</span><span class="p">,</span> <span class="n">gamma_sample</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">multinomial_sample</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="bptool.generate_nonsample_tally">
+    <p>def <span class="ident">generate_nonsample_tally</span>(</p><p>sample_tally, total_num_votes, seed)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Given a sample_tally, the total number of votes in an election, and a seed,
+generate the nonsample tally in the election using the Dirichlet multinomial
+distribution.</p>
+<p>Input Parameters:</p>
+<p>-sample_tally is a list of integers, where the i'th index
+in sample_tally corresponds to the number of votes that candidate
+i received in the sample.</p>
+<p>-total_num_votes is an integer representing the number of
+ballots that were cast in this election.</p>
+<p>-seed is an integer or None. Assuming that it isn't None, we
+use it to seed the random state for the audit.</p>
+<p>Returns:</p>
+<p>-nonsample_tally is list of integers, which sums up
+to the total_num_votes - sample_size. The i'th index represents the
+simulated number of votes for candidate i in the remaining, unsampled
+votes.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-bptool.generate_nonsample_tally', this);">Show source &equiv;</a></p>
+  <div id="source-bptool.generate_nonsample_tally" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">generate_nonsample_tally</span><span class="p">(</span><span class="n">sample_tally</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">,</span> <span class="n">seed</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given a sample_tally, the total number of votes in an election, and a seed,</span>
+<span class="sd">    generate the nonsample tally in the election using the Dirichlet multinomial</span>
+<span class="sd">    distribution.</span>
+
+<span class="sd">    Input Parameters:</span>
+
+<span class="sd">    -sample_tally is a list of integers, where the i&#39;th index</span>
+<span class="sd">    in sample_tally corresponds to the number of votes that candidate</span>
+<span class="sd">    i received in the sample.</span>
+
+<span class="sd">    -total_num_votes is an integer representing the number of</span>
+<span class="sd">    ballots that were cast in this election.</span>
+
+<span class="sd">    -seed is an integer or None. Assuming that it isn&#39;t None, we</span>
+<span class="sd">    use it to seed the random state for the audit.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+
+<span class="sd">    -nonsample_tally is list of integers, which sums up</span>
+<span class="sd">    to the total_num_votes - sample_size. The i&#39;th index represents the</span>
+<span class="sd">    simulated number of votes for candidate i in the remaining, unsampled</span>
+<span class="sd">    votes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">rs</span> <span class="o">=</span> <span class="n">create_rs</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">nonsample_tally</span> <span class="o">=</span> <span class="n">dirichlet_multinomial</span><span class="p">(</span><span class="n">sample_tally</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">,</span> <span class="n">rs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">nonsample_tally</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="bptool.preprocess_csv">
+    <p>def <span class="ident">preprocess_csv</span>(</p><p>path_to_csv)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Preprocess a CSV file into the correct format for our
+sample tallies. In particular, we ignore the county name column
+and summarize the relevant information about the sample tallies
+in each county, the total number of votes in each county, and
+the candidate names.</p>
+<p>Input Parameters:</p>
+<p>-path_to_csv is a string, representing the full path to the CSV
+file, containing sample tallies.</p>
+<p>Returns:</p>
+<p>-sample_tallies is a list of lists. Each list represents the sample tally
+for a given county. So, sample_tallies[i] represents the tally for county
+i. Then, sample_tallies[i][j] represents the number of votes candidate
+j receives in county i.</p>
+<p>-total_num_votes is an integer representing the number of
+ballots that were cast in this election.</p>
+<p>-candidate_names is an ordered list of strings, containing the name of
+every candidate in the contest we are auditing.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-bptool.preprocess_csv', this);">Show source &equiv;</a></p>
+  <div id="source-bptool.preprocess_csv" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">preprocess_csv</span><span class="p">(</span><span class="n">path_to_csv</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Preprocess a CSV file into the correct format for our</span>
+<span class="sd">    sample tallies. In particular, we ignore the county name column</span>
+<span class="sd">    and summarize the relevant information about the sample tallies</span>
+<span class="sd">    in each county, the total number of votes in each county, and</span>
+<span class="sd">    the candidate names.</span>
+
+<span class="sd">    Input Parameters:</span>
+
+<span class="sd">    -path_to_csv is a string, representing the full path to the CSV</span>
+<span class="sd">    file, containing sample tallies.</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">    -sample_tallies is a list of lists. Each list represents the sample tally</span>
+<span class="sd">    for a given county. So, sample_tallies[i] represents the tally for county</span>
+<span class="sd">    i. Then, sample_tallies[i][j] represents the number of votes candidate</span>
+<span class="sd">    j receives in county i.</span>
+
+<span class="sd">    -total_num_votes is an integer representing the number of</span>
+<span class="sd">    ballots that were cast in this election.</span>
+
+<span class="sd">    -candidate_names is an ordered list of strings, containing the name of</span>
+<span class="sd">    every candidate in the contest we are auditing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path_to_csv</span><span class="p">)</span> <span class="k">as</span> <span class="n">csvfile</span><span class="p">:</span>
+        <span class="n">sample_tallies</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">total_num_votes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictReader</span><span class="p">(</span><span class="n">csvfile</span><span class="p">)</span>
+        <span class="n">candidate_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">reader</span><span class="o">.</span><span class="n">fieldnames</span>
+                           <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span>
+                           <span class="p">[</span><span class="s2">&quot;county name&quot;</span><span class="p">,</span> <span class="s2">&quot;total votes&quot;</span><span class="p">]]</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">reader</span><span class="p">:</span>
+            <span class="n">sample_tally</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">row</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;county name&quot;</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;total votes&quot;</span><span class="p">:</span>
+                    <span class="n">total_num_votes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">key</span><span class="p">]))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+                    <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">count</span> 
+                    <span class="n">sample_tally</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">count</span><span class="p">)</span>
+            <span class="n">sample_tallies</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sample_tally</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sample_tally</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sample_tallies</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">sample_tally</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">total_num_votes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">sample_tallies</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">,</span> <span class="n">candidate_names</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="bptool.print_results">
+    <p>def <span class="ident">print_results</span>(</p><p>candidate_names, win_probs)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Given list of candidate_names and win_probs pairs, print summary
+of the Bayesian audit simulations.</p>
+<p>Input Parameters:</p>
+<p>-candidate_names is an ordered list of strings, containing the name of
+every candidate in the contest we are auditing.</p>
+<p>-win_probs is a list of pairs (i, p) where p is the fractional representation of the
+number of trials that candidate i has won out of the num_trials simulations.</p>
+<p>Returns:</p>
+<p>-None, but prints a summary of how often each candidate has won in
+the simulations.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-bptool.print_results', this);">Show source &equiv;</a></p>
+  <div id="source-bptool.print_results" class="source">
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">print_results</span><span class="p">(</span><span class="n">candidate_names</span><span class="p">,</span> <span class="n">win_probs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given list of candidate_names and win_probs pairs, print summary</span>
+<span class="sd">    of the Bayesian audit simulations.</span>
+
+<span class="sd">    Input Parameters:</span>
+
+<span class="sd">    -candidate_names is an ordered list of strings, containing the name of</span>
+<span class="sd">    every candidate in the contest we are auditing.</span>
+
+<span class="sd">    -win_probs is a list of pairs (i, p) where p is the fractional representation of the</span>
+<span class="sd">    number of trials that candidate i has won out of the num_trials simulations.</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">    -None, but prints a summary of how often each candidate has won in</span>
+<span class="sd">    the simulations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;BPTOOL (version 0.8)&quot;</span><span class="p">)</span>
+
+    <span class="n">want_sorted_results</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="k">if</span> <span class="n">want_sorted_results</span><span class="p">:</span>
+        <span class="n">sorted_win_probs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="n">win_probs</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">tup</span><span class="p">:</span> <span class="n">tup</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">sorted_win_probs</span> <span class="o">=</span> <span class="n">win_probs</span>
+
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;{:&lt;24s} </span><span class="se">\t</span><span class="s2"> {:&lt;s}&quot;</span>
+          <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;Candidate name&quot;</span><span class="p">,</span>
+                  <span class="s2">&quot;Estimated probability of winning a full recount&quot;</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">candidate_index</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="n">sorted_win_probs</span><span class="p">:</span>
+        <span class="n">candidate_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">candidate_names</span><span class="p">[</span><span class="n">candidate_index</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot; {:&lt;24s} </span><span class="se">\t</span><span class="s2">  {:6.2f} %  &quot;</span>
+              <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">candidate_name</span><span class="p">,</span> <span class="mi">100</span><span class="o">*</span><span class="n">prob</span><span class="p">))</span>
+</pre></div>
+
+  </div>
+</div>
+
+  </div>
+  
+
+
+  </section>
+
+    </article>
+  <div class="clear"> </div>
+  <footer id="footer">
+    <p>
+      Documentation generated by
+      <a href="https://github.com/BurntSushi/pdoc">pdoc 0.3.2</a>
+    </p>
+
+    <p>pdoc is in the public domain with the
+      <a href="http://unlicense.org">UNLICENSE</a></p>
+
+    <p>Design by <a href="http://nadh.in">Kailash Nadh</a></p>
+  </footer>
+</div>
+</body>
+</html>
