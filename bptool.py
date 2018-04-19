@@ -19,6 +19,25 @@ If this module is imported, rather than used stand-alone, then the procedure
 can compute the desired probability of each candidate winning a full recount,
 given sample tallies for each county.
 
+For command-line usage, there are really two modes:
+(1) For single-county usage, give a command like:
+        python bptool.py 10000 60 50 30
+    where
+        10000 is the total number of votes cast in the county
+        60 50 30  are the votes seen for each candidate in the auditing so far
+
+(2) For multiple-county usage, give a command like
+        python bptool.py --path_to_csv test.csv
+    where test.csv is a file like:
+        county name, total votes, Alice, Bob
+        1, 1000, 30, 15
+        2, 2000, 40, 50
+    with one header line, then one line per county.  The field names
+    "county name" and "total votes" are required; the candidate names are
+    the candidate names for the contest being audited.
+
+There are optional parameters as well, to see the documentation of them, do
+    python bptool.py --h
 """
 
 
@@ -27,6 +46,7 @@ import argparse
 from copy import deepcopy
 import csv
 import numpy as np
+import sys
 
 # This function is taken from audit-lab directly.
 def convert_int_to_32_bit_numpy_array(v):
@@ -248,23 +268,25 @@ if __name__ == '__main__':
                                                  'Across Multiple Counties')
 
     parser.add_argument("total_num_votes",
-                        help="The total number of votes (including the already audited ones) "
-                             "which are included in the election.")
+                        nargs="?",
+                        help="(Optional: for single-county audits:) The total number of votes"
+                             "(including the already audited ones) "
+                             "that were cast in the election.")
 
-    parser.add_argument("--single_county_tally",
-                        help="If the election only has one county, "
-                             "then pass the tally as space separated numbers,"
+    parser.add_argument("single_county_tally",
+                        help="(Optional: for single-county audits:) the tally given as space separated numbers,"
                              "e.g.  5 30 25",
                         nargs="*",
+                        default=[],
                         type=int)
 
     parser.add_argument("--path_to_csv",
                         help="If the election spans multiple counties, "
-                             "it might be easier to pass in the sample tallies "
-                             "as a csv file. In this case, pass in the full path to "
-                             "the csv file as an argument. One of the column names "
+                             "the sample tallies should be given in a csv file." 
+                             "Give here the csv file pathname as an argument. "
+                             "In the header row, one of the column names "
                              "of the csv file must be Total Votes and another can be "
-                             "County Name. All other columns are assumed to be the names "
+                             "County Name. Other columns are the names "
                              "or identifiers for candidates.")
 
     parser.add_argument("--audit_seed",
@@ -276,18 +298,24 @@ if __name__ == '__main__':
 
     parser.add_argument("--num_trials",
                         help="Bayesian audits work by simulating the data "
-                             "which hasn't been sampled to predict who the winner is. "
-                             "This argument specifies how many trials we should do to "
-                             "predict the winner",
+                             "which hasn't been sampled to estimate the chance that. "
+                             "each candidate would win a full hand recount."
+                             "This argument specifies how many trials are done to "
+                             "compute these estimates.",
                         type=int,
                         default=10000)
 
     args = parser.parse_args()
+    if args.path_to_csv==None and args.total_num_votes==None:
+        parser.print_help()
+        sys.exit()
 
     if args.path_to_csv:
+        # if sample tallies are in CSV file read that
         sample_tallies, total_num_votes, candidate_names = \
             preprocess_csv(args.path_to_csv)
     else:
+        # otherwise extract desired data from command line
         sample_tallies = preprocess_single_tally(args.single_county_tally)
         total_num_votes = [int(args.total_num_votes)]
         candidate_names = list(range(1, len(sample_tallies[0]) + 1))
