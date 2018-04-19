@@ -8,8 +8,8 @@ multi-county ballot-poling audits.
 ## Single County
 If the election only has one county enter tallies as numbers e.g.
 
-```python3 bptool.py 20000 40 60 10
-```
+```python3 bptool.py 20000 40 60 10```
+
 where the first number is the total number of votes cast, and the following numbers are the number of
 votes seen for each candidate in the auditing done so far.
 
