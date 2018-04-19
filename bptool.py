@@ -132,12 +132,11 @@ def compute_winner(sample_tallies, total_num_votes, seed, pretty_print=False):
     return winner
 
 
-def compute_winner_probabilities(sample_tallies,
-                                 total_num_votes,
-                                 seed,
-                                 num_trials,
-                                 candidate_names,
-                                 pretty_print=True):
+def compute_win_probs(sample_tallies,
+                      total_num_votes,
+                      seed,
+                      num_trials,
+                      candidate_names):
     """
 
     Runs num_trials simulations of the Bayesian audit to find the probability that
@@ -145,12 +144,12 @@ def compute_winner_probabilities(sample_tallies,
 
     In particular, we run a single iteration of a Bayesian audit (extend each county's
     sample to simulate all the votes in the county and calculate the overall winner
-    across counties) num_trials times. Then, we print the candidate that has won
-    the most often, along with the number of trials they have won.
+    across counties) num_trials times.  We return a list giving the fraction of time
+    each candidate has won.
     """
 
     num_candidates = len(candidate_names)
-    winners = {(k + 1): 0 for k in range(num_candidates)}
+    win_count = [0]*(1+num_candidates)
     for i in range(num_trials):
         # We want a different seed per trial.
         # Adding i to seed caused correlations, as numpy apparently
@@ -159,30 +158,40 @@ def compute_winner_probabilities(sample_tallies,
         winner = compute_winner(sample_tallies,
                                total_num_votes,
                                seed_i)
-        winners[winner+1] += 1
-    winners_list = list(winners.items())
-    most_likely_winner = winners_list.index(
-        max(winners_list, key=lambda x: x[1]))
+        win_count[winner+1] += 1
+    win_probs = [(i, win_count[i]/float(num_trials))
+                 for i in range(1, len(win_count))]
+    return win_probs
 
-    if pretty_print:
-        print("BPTOOL (version 0.8)")
-        print("With %d trials in total" % num_trials, end=" ")
-        print("and candidates: %s" % str(candidate_names))
-        sorted_winners_list = sorted(
-            winners_list, key=lambda tup: tup[1], reverse=True)
-        print("{:<24s} \t {:<s}"
-              .format("Candidate name",
-                      "Estimated probability (as a percentage) of winning a full recount"))
-        for candidate_index, votes in sorted_winners_list:
-            candidate_name = str(candidate_names[candidate_index - 1])
-            vote_percent = 100 * int(votes) / float(num_trials)
-            print("  {:<24s} \t  {:6.2f} %  "
-                  .format(candidate_name, vote_percent))
+
+def print_results(candidate_names, win_probs):
+    """
+    Given win_probs (a list of (winner index, winning prob) pairs,
+    print summary
+    """
+
+    print("BPTOOL (version 0.8)")
+
+    want_sorted_results = True
+    if want_sorted_results:
+        sorted_win_probs = sorted(
+            win_probs, key=lambda tup: tup[1], reverse=True)
+    else:
+        sorted_win_probs = win_probs
+
+    print("{:<24s} \t {:<s}"
+          .format("Candidate name",
+                  "Estimated probability of winning a full recount"))
+
+    for candidate_index, prob in sorted_win_probs:
+        candidate_name = str(candidate_names[candidate_index - 1])
+        print(" {:<24s} \t  {:6.2f} %  "
+              .format(candidate_name, 100*prob))
 
 
 def preprocess_single_tally(single_county_tally):
     """
-    Convert list  tally from one conuty to a multiple dimensional list
+    Convert list tally from one county to a multiple dimensional list
     """
     return [single_county_tally]
 
@@ -269,9 +278,10 @@ if __name__ == '__main__':
         total_num_votes = [int(args.total_num_votes)]
         candidate_names = list(range(1, len(sample_tallies[0]) + 1))
 
-    compute_winner_probabilities(
-        sample_tallies,
-        total_num_votes,
-        args.audit_seed,
-        args.num_trials,
-        candidate_names)
+    win_probs = compute_win_probs(
+                    sample_tallies,
+                    total_num_votes,
+                    args.audit_seed,
+                    args.num_trials,
+                    candidate_names)
+    print_results(candidate_names, win_probs)
