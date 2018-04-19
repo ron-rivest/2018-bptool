@@ -132,7 +132,8 @@ def compute_winner(sample_tallies, total_num_votes, seed, pretty_print=False):
     return winner
 
 
-def compute_winner_probabilities(sample_tallies, total_num_votes,
+def compute_winner_probabilities(sample_tallies,
+                                 total_num_votes,
                                  seed,
                                  num_trials,
                                  candidate_names,
@@ -147,10 +148,13 @@ def compute_winner_probabilities(sample_tallies, total_num_votes,
     the most often, along with the number of trials they have won.
     """
 
-    num_choices = len(sample_tallies[0])       # = number of candidates
-    winners = {(k + 1): 0 for k in range(num_choices)}
+    num_candidates = len(candidate_names)
+    winners = {(k + 1): 0 for k in range(num_candidates)}
     for i in range(num_trials):
-        seed_i = seed + i                     # different seed / trial
+        # We want a different seed per trial.
+        # Adding i to seed caused correlations, as numpy apparently
+        # adds one per trials, so we multiply i by 314...
+        seed_i = seed + i*314159265                 
         winners[compute_winner(sample_tallies,
                                total_num_votes,
                                seed_i) + 1] += 1
@@ -159,26 +163,16 @@ def compute_winner_probabilities(sample_tallies, total_num_votes,
         max(winners_list, key=lambda x: x[1]))
 
     if pretty_print:
+        print("BPTOOL (version 0.8)")
         print("With %d trials in total" % num_trials, end=" ")
         print("and candidates: %s" % str(candidate_names))
-        print("Simulation results are:")
         sorted_winners_list = sorted(
             winners_list, key=lambda tup: tup[1], reverse=True)
         print("Candidate name \t\t Estimated probability (as a percentage) of winning a full recount ")
         for candidate_index, votes in sorted_winners_list:
             candidate_name = str(candidate_names[candidate_index - 1])
             vote_percent = 100 * int(votes) / float(num_trials)
-            print("%s \t\t\t %6.2f %%  " % (candidate_name, vote_percent))
-
-
-def preprocess_audit_seed(audit_seed):
-    """
-    Preprocesses the audit seed to make it of type int, if it isn't None.
-    """
-
-    if audit_seed is not None:
-        audit_seed = int(audit_seed)
-    return audit_seed
+            print("  %s \t\t\t  %6.2f %%  " % (candidate_name, vote_percent))
 
 
 def preprocess_single_tally(single_county_tally):
@@ -250,6 +244,7 @@ if __name__ == '__main__':
                         help="For reproducibility, we provide the option to seed the "
                              "randomness in the audit. If the same seed is provided, the audit "
                              "will return the same results.",
+                        type=int,
                         default=1)
 
     parser.add_argument("--num_trials",
@@ -257,24 +252,21 @@ if __name__ == '__main__':
                              "which hasn't been sampled to predict who the winner is. "
                              "This argument specifies how many trials we should do to "
                              "predict the winner",
+                        type=int,
                         default=10000)
     args = parser.parse_args()
 
     if args.path_to_csv:
-        sample_tallies, total_num_votes, candidate_names = \\
+        sample_tallies, total_num_votes, candidate_names = \
             preprocess_csv(args.path_to_csv)
     else:
         sample_tallies = preprocess_single_tally(args.single_county_tally)
         total_num_votes = [int(args.total_num_votes)]
         candidate_names = list(range(1, len(sample_tallies[0]) + 1))
 
-    audit_seed = preprocess_audit_seed(args.audit_seed)
-
-    num_trials = int(args.num_trials)
-
     compute_winner_probabilities(
         sample_tallies,
         total_num_votes,
-        audit_seed,
-        num_trials,
+        args.audit_seed,
+        args.num_trials,
         candidate_names)
