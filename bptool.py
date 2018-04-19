@@ -167,14 +167,11 @@ def preprocess_audit_seed(audit_seed):
     return audit_seed
 
 
-def preprocess_single_tally(sample_tally_list):
+def preprocess_single_tally(single_county_tally):
     """
-    Preprocesses a single tally passed in as an argument. In particular,
-    strips spaces and converts each comma-separated element of the tally
-    into an integer.
+    Convert list  tally from one conuty to a multiple dimensional list
     """
-
-    return [sample_tally_list]
+    return [single_county_tally]
 
 
 def preprocess_csv(path_to_csv):
@@ -219,7 +216,7 @@ if __name__ == '__main__':
                         help="The total number of votes (including the already audited ones) "
                              "which are included in the election.")
 
-    parser.add_argument("--sample_tally",
+    parser.add_argument("--single_county_tally",
                         help="If the election only has one county, "
                              "then pass the tally as space separated numbers,"
                              "e.g.  5 30 25", nargs="*", type=int)
@@ -251,7 +248,7 @@ if __name__ == '__main__':
         sample_tallies, total_num_votes, candidate_names = preprocess_csv(
             args.path_to_csv)
     else:
-        sample_tallies = preprocess_single_tally(args.sample_tally)
+        sample_tallies = preprocess_single_tally(args.single_county_tally)
         total_num_votes = [int(args.total_num_votes)]
         candidate_names = list(range(1,len(sample_tallies[0])+1))
 

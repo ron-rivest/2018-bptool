@@ -7,7 +7,7 @@ bptool.py can be run with python3 in two methods.
 ## Single County
 If the election only has one county enter tallies as numbers e.g.
 
-```python3 bptool.py 20000 --sample_tally 5 30 25```
+```python3 bptool.py 20000 --single_county_tally 5 30 25```
 
 ## Multiple Counties
 If the election spans multiple counties, it might be easier to pass in the sample tallies as a csv file
