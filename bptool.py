@@ -76,21 +76,25 @@ def dirichlet_multinomial(sample_tally, total_num_votes, rs):
     return multinomial_sample
 
 
-def generate_nonsample(tally, total_num_votes, seed):
+def generate_nonsample_tally(tally, total_num_votes, seed):
     """
     Given a tally, the total number of votes in an election, and a seed,
-    generate the nonsample votes in the election using the Dirichlet multinomial
+    generate the nonsample tally in the election using the Dirichlet multinomial
     distribution.
     """
     
     rs = create_rs(seed)
-    return dirichlet_multinomial(tally, total_num_votes, rs)
+    nonsample_tally = dirichlet_multinomial(tally, total_num_votes, rs)
+    return nonsample_tally
 
 
 def compute_winner(sample_tallies, total_num_votes, seed, pretty_print=False):
     """
-    Given a list of sample tallies, the number of votes from each county, and
-    a random seed, compute the winner in a single simulation. In particular,
+    Given a list of sample tallies
+    the number of votes from each county, and
+    a random seed, 
+    compute the winner in a single simulation. 
+    In particular,
     for each county, we use the Dirichlet-Multinomial distribution to generate
     the nonsample tallies. Then, we sum over all the counties to produce our
     final tally and calculate the predicted winner over all the counties in
@@ -99,7 +103,7 @@ def compute_winner(sample_tallies, total_num_votes, seed, pretty_print=False):
     
     final_tally = None
     for i, sample_tally in enumerate(sample_tallies):
-        nonsample = generate_nonsample(sample_tally, total_num_votes[i], seed)
+        nonsample = generate_nonsample_tally(sample_tally, total_num_votes[i], seed)
         final_county_tally = [sum(k) for k in zip(sample_tally, nonsample)]
         if final_tally is None:
             final_tally = final_county_tally
@@ -129,9 +133,13 @@ def compute_winner_probabilities(sample_tallies, total_num_votes,
     the most often, along with the number of trials they have won.
     """
 
-    winners = {(k + 1): 0 for k in range(len(sample_tallies[0]))}
+    num_choices = len(sample_tallies[0])       # = number of candidates
+    winners = {(k + 1): 0 for k in range(num_choices)}
     for i in range(num_trials):
-        winners[compute_winner(sample_tallies, total_num_votes, seed) + 1] += 1
+        seed_i = seed + i                     # different seed / trial
+        winners[compute_winner(sample_tallies,
+                               total_num_votes,
+                               seed_i) + 1] += 1
     winners_list = list(winners.items())
     most_likely_winner = winners_list.index(
         max(winners_list, key=lambda x: x[1]))
@@ -142,11 +150,11 @@ def compute_winner_probabilities(sample_tallies, total_num_votes,
         print("Simulation results are:")
         sorted_winners_list = sorted(
             winners_list, key=lambda tup: tup[1], reverse=True)
-        print("Candidate name \t\t Estimate probability of winning a full recount ")
+        print("Candidate name \t\t Estimated probability (as a percentage) of winning a full recount ")
         for candidate_index, votes in sorted_winners_list:
             candidate_name = str(candidate_names[candidate_index - 1])
-            vote_percent = int(votes) / float(num_trials)
-            print("%s \t\t\t %.02f  " % (candidate_name, vote_percent))
+            vote_percent = 100 * int(votes) / float(num_trials)
+            print("%s \t\t\t %6.2f %%  " % (candidate_name, vote_percent))
 
 
 def preprocess_audit_seed(audit_seed):
