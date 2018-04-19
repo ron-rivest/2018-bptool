@@ -82,7 +82,7 @@ def generate_nonsample_tally(tally, total_num_votes, seed):
     generate the nonsample tally in the election using the Dirichlet multinomial
     distribution.
     """
-    
+
     rs = create_rs(seed)
     nonsample_tally = dirichlet_multinomial(tally, total_num_votes, rs)
     return nonsample_tally
@@ -100,11 +100,13 @@ def compute_winner(sample_tallies, total_num_votes, seed, pretty_print=False):
     final tally and calculate the predicted winner over all the counties in
     the election.
     """
-    
+
     final_tally = None
     for i, sample_tally in enumerate(sample_tallies):
-        nonsample_tally = generate_nonsample_tally(sample_tally, total_num_votes[i], seed)
-        final_county_tally = [sum(k) for k in zip(sample_tally, nonsample_tally)]
+        nonsample_tally = generate_nonsample_tally(
+            sample_tally, total_num_votes[i], seed)
+        final_county_tally = [sum(k)
+                              for k in zip(sample_tally, nonsample_tally)]
         if final_tally is None:
             final_tally = final_county_tally
         else:
@@ -250,7 +252,7 @@ if __name__ == '__main__':
     else:
         sample_tallies = preprocess_single_tally(args.single_county_tally)
         total_num_votes = [int(args.total_num_votes)]
-        candidate_names = list(range(1,len(sample_tallies[0])+1))
+        candidate_names = list(range(1, len(sample_tallies[0]) + 1))
 
     audit_seed = preprocess_audit_seed(args.audit_seed)
 
