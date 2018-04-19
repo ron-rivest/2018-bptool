@@ -140,7 +140,8 @@ def compute_winner_probabilities(sample_tallies,
                                  pretty_print=True):
     """
 
-    Runs num_trials simulations of the Bayesian audit to find the most plausible winner.
+    Runs num_trials simulations of the Bayesian audit to find the probability that
+    each candidate will win.
 
     In particular, we run a single iteration of a Bayesian audit (extend each county's
     sample to simulate all the votes in the county and calculate the overall winner
@@ -153,11 +154,12 @@ def compute_winner_probabilities(sample_tallies,
     for i in range(num_trials):
         # We want a different seed per trial.
         # Adding i to seed caused correlations, as numpy apparently
-        # adds one per trials, so we multiply i by 314...
+        # adds one per trial, so we multiply i by 314...
         seed_i = seed + i*314159265                 
-        winners[compute_winner(sample_tallies,
+        winner = compute_winner(sample_tallies,
                                total_num_votes,
-                               seed_i) + 1] += 1
+                               seed_i)
+        winners[winner+1] += 1
     winners_list = list(winners.items())
     most_likely_winner = winners_list.index(
         max(winners_list, key=lambda x: x[1]))
@@ -168,11 +170,14 @@ def compute_winner_probabilities(sample_tallies,
         print("and candidates: %s" % str(candidate_names))
         sorted_winners_list = sorted(
             winners_list, key=lambda tup: tup[1], reverse=True)
-        print("Candidate name \t\t Estimated probability (as a percentage) of winning a full recount ")
+        print("{:<24s} \t {:<s}"
+              .format("Candidate name",
+                      "Estimated probability (as a percentage) of winning a full recount"))
         for candidate_index, votes in sorted_winners_list:
             candidate_name = str(candidate_names[candidate_index - 1])
             vote_percent = 100 * int(votes) / float(num_trials)
-            print("  %s \t\t\t  %6.2f %%  " % (candidate_name, vote_percent))
+            print("  {:<24s} \t  {:6.2f} %  "
+                  .format(candidate_name, vote_percent))
 
 
 def preprocess_single_tally(single_county_tally):
