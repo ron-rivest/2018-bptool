@@ -1,6 +1,6 @@
 # bptool.py
 # Authors: Ronald L. Rivest, Mayuri Sridhar, Zara A Perumal
-# April 23, 2018
+# April 19, 2018
 # python3
 
 """
@@ -13,6 +13,12 @@ may be a precinct or a state or something else, as long as you can
 sample its collection of paper ballots.
 
 The Bayesian model uses a prior pseudocount of "+1" for each candidate.
+
+If this module is imported, rather than used stand-alone, then the procedure
+    compute_win_probs 
+can compute the desired probability of each candidate winning a full recount,
+given sample tallies for each county.
+
 """
 
 
@@ -144,8 +150,8 @@ def compute_win_probs(sample_tallies,
 
     In particular, we run a single iteration of a Bayesian audit (extend each county's
     sample to simulate all the votes in the county and calculate the overall winner
-    across counties) num_trials times.  We return a list giving the fraction of time
-    each candidate has won.
+    across counties) num_trials times.  We return a list of pairs (i, p) where
+    p is the fraction of the time candidate i has won.
     """
 
     num_candidates = len(candidate_names)
@@ -166,8 +172,8 @@ def compute_win_probs(sample_tallies,
 
 def print_results(candidate_names, win_probs):
     """
-    Given win_probs (a list of (winner index, winning prob) pairs,
-    print summary
+    Given list of candidate_names and win_probs 
+    (a list of (winner index, winning prob) pairs, print summary
     """
 
     print("BPTOOL (version 0.8)")
@@ -198,16 +204,16 @@ def preprocess_single_tally(single_county_tally):
 
 def preprocess_csv(path_to_csv):
     """
-    Preprocesses a CSV file into the correct format for our
-    sample tallies. In particular, we ignore the county name column and
-    the name of the candidates. However, we create a sample_tallies list
+    Preprocess a CSV file into the correct format for our
+    sample tallies. In particular, we ignore the county name column.
+    However, we create a sample_tallies list
     and a total_num_votes list, which contain the relevant information
-    about each county election.
+    about each county election.  We also return a list of candidate names.
 
     Sample_tallies[i] is a list of ints, where sample_tallies[i][j]
     represents the number of votes for candidate j in the sample tally
     for county i. Similarly, total_num_votes[i] represents the total
-    number of votes in county i.
+    number of votes cast in county i.
     """
 
     with open(path_to_csv) as csvfile:
@@ -225,12 +231,19 @@ def preprocess_csv(path_to_csv):
                 if key.strip().lower() == "total votes":
                     total_num_votes.append(int(row[key]))
                 else:
-                    sample_tally.append(int(row[key].strip()))
+                    count = int(row[key].strip())
+                    assert 0 <= count 
+                    sample_tally.append(count)
             sample_tallies.append(sample_tally)
+
+    for i, sample_tally in enumerate(sample_tallies):
+        assert 0 <= sum(sample_tally) <= total_num_votes[i]
+
     return sample_tallies, total_num_votes, candidate_names
 
 
 if __name__ == '__main__':
+
     parser = argparse.ArgumentParser(description='Bayesian Audit Process For A Single Contest '
                                                  'Across Multiple Counties')
 
@@ -268,6 +281,7 @@ if __name__ == '__main__':
                              "predict the winner",
                         type=int,
                         default=10000)
+
     args = parser.parse_args()
 
     if args.path_to_csv:
