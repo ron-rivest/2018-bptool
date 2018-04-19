@@ -48,6 +48,10 @@ import csv
 import numpy as np
 import sys
 
+##############################################################################
+## Random number generation
+##############################################################################
+
 # This function is taken from audit-lab directly.
 def convert_int_to_32_bit_numpy_array(v):
     """
@@ -85,6 +89,10 @@ def create_rs(seed):
         seed = convert_int_to_32_bit_numpy_array(seed)
     return np.random.RandomState(seed)
 
+
+##############################################################################
+## Main computational routines
+##############################################################################
 
 def dirichlet_multinomial(sample_tally, total_num_votes, rs):
     """
@@ -165,13 +173,14 @@ def compute_win_probs(sample_tallies,
                       candidate_names):
     """
 
-    Runs num_trials simulations of the Bayesian audit to find the probability that
-    each candidate will win.
+    Runs num_trials simulations of the Bayesian audit to estimate the probability that
+    each candidate would win a full recount.
 
     In particular, we run a single iteration of a Bayesian audit (extend each county's
     sample to simulate all the votes in the county and calculate the overall winner
-    across counties) num_trials times.  We return a list of pairs (i, p) where
-    p is the fraction of the time candidate i has won.
+    across counties) num_trials times.  
+
+    Return a list of pairs (i, p) where p is the fraction of the time candidate i has won.
     """
 
     num_candidates = len(candidate_names)
@@ -189,6 +198,10 @@ def compute_win_probs(sample_tallies,
                  for i in range(1, len(win_count))]
     return win_probs
 
+
+##############################################################################
+## Routines for command-line interface and file (csv) input
+##############################################################################
 
 def print_results(candidate_names, win_probs):
     """
@@ -213,13 +226,6 @@ def print_results(candidate_names, win_probs):
         candidate_name = str(candidate_names[candidate_index - 1])
         print(" {:<24s} \t  {:6.2f} %  "
               .format(candidate_name, 100*prob))
-
-
-def preprocess_single_tally(single_county_tally):
-    """
-    Convert list tally from one county to a multiple dimensional list
-    """
-    return [single_county_tally]
 
 
 def preprocess_csv(path_to_csv):
@@ -265,7 +271,7 @@ def preprocess_csv(path_to_csv):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Bayesian Audit Process For A Single Contest '
-                                                 'Across Multiple Counties')
+                                                 'Across One or More Counties')
 
     parser.add_argument("total_num_votes",
                         nargs="?",
@@ -298,8 +304,8 @@ if __name__ == '__main__':
 
     parser.add_argument("--num_trials",
                         help="Bayesian audits work by simulating the data "
-                             "which hasn't been sampled to estimate the chance that. "
-                             "each candidate would win a full hand recount."
+                             "which hasn't been sampled to estimate the chance that "
+                             "each candidate would win a full hand recount. "
                              "This argument specifies how many trials are done to "
                              "compute these estimates.",
                         type=int,
@@ -316,8 +322,8 @@ if __name__ == '__main__':
             preprocess_csv(args.path_to_csv)
     else:
         # otherwise extract desired data from command line
-        sample_tallies = preprocess_single_tally(args.single_county_tally)
         total_num_votes = [int(args.total_num_votes)]
+        sample_tallies = [args.single_county_tally]
         candidate_names = list(range(1, len(sample_tallies[0]) + 1))
 
     win_probs = compute_win_probs(
