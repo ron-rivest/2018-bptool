@@ -3,12 +3,24 @@
 # April 23, 2018
 # python3
 
+"""
+This module provides routines for computing the winning probabilities
+for various candidates, given audit sample data, using a Bayesian
+model, in a ballot-polling audit of a plurality election.  The
+election may be single-jurisdiction or multi-jurisdiction.  In this
+module we call a jurisdiction a "county" for convenience, although it
+may be a precinct or a state or something else, as long as you can
+sample its collection of paper ballots.
+
+The Bayesian model uses a prior pseudocount of "+1" for each candidate.
+"""
+
+
 import argparse
 
 from copy import deepcopy
 import csv
 import numpy as np
-
 
 # This function is taken from audit-lab directly.
 def convert_int_to_32_bit_numpy_array(v):
@@ -38,8 +50,9 @@ def convert_int_to_32_bit_numpy_array(v):
 
 def create_rs(seed):
     """
-    Given a specific seed, create and return a Numpy RandomState object,
-    to make all the audit actions reproducible.
+    Create and return a Numpy RandomState object for a given seed. 
+    The input seed should be a python integer, arbitrarily large.
+    The purpose of this routine is to make all the audit actions reproducible.
     """
 
     if seed is not None:
@@ -90,19 +103,18 @@ def generate_nonsample_tally(tally, total_num_votes, seed):
 
 def compute_winner(sample_tallies, total_num_votes, seed, pretty_print=False):
     """
-    Given a list of sample tallies
-    the number of votes from each county, and
-    a random seed, 
+    Given a list of sample tallies (one sample tally per county)
+    a list giving the total number of votes cast in each county, 
+    and a random seed (an integer)
     compute the winner in a single simulation. 
-    In particular,
-    for each county, we use the Dirichlet-Multinomial distribution to generate
-    the nonsample tallies. Then, we sum over all the counties to produce our
+    For each county, we use the Dirichlet-Multinomial distribution to generate
+    a nonsample tally. Then, we sum over all the counties to produce our
     final tally and calculate the predicted winner over all the counties in
     the election.
     """
 
     final_tally = None
-    for i, sample_tally in enumerate(sample_tallies):
+    for i, sample_tally in enumerate(sample_tallies):   # loop over counties
         nonsample_tally = generate_nonsample_tally(
             sample_tally, total_num_votes[i], seed)
         final_county_tally = [sum(k)
@@ -221,7 +233,9 @@ if __name__ == '__main__':
     parser.add_argument("--single_county_tally",
                         help="If the election only has one county, "
                              "then pass the tally as space separated numbers,"
-                             "e.g.  5 30 25", nargs="*", type=int)
+                             "e.g.  5 30 25",
+                        nargs="*",
+                        type=int)
 
     parser.add_argument("--path_to_csv",
                         help="If the election spans multiple counties, "
@@ -241,14 +255,14 @@ if __name__ == '__main__':
     parser.add_argument("--num_trials",
                         help="Bayesian audits work by simulating the data "
                              "which hasn't been sampled to predict who the winner is. "
-                             "This argument specifies how many simulations we should do to "
+                             "This argument specifies how many trials we should do to "
                              "predict the winner",
                         default=10000)
     args = parser.parse_args()
 
     if args.path_to_csv:
-        sample_tallies, total_num_votes, candidate_names = preprocess_csv(
-            args.path_to_csv)
+        sample_tallies, total_num_votes, candidate_names = \\
+            preprocess_csv(args.path_to_csv)
     else:
         sample_tallies = preprocess_single_tally(args.single_county_tally)
         total_num_votes = [int(args.total_num_votes)]
