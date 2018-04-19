@@ -103,8 +103,8 @@ def compute_winner(sample_tallies, total_num_votes, seed, pretty_print=False):
     
     final_tally = None
     for i, sample_tally in enumerate(sample_tallies):
-        nonsample = generate_nonsample_tally(sample_tally, total_num_votes[i], seed)
-        final_county_tally = [sum(k) for k in zip(sample_tally, nonsample)]
+        nonsample_tally = generate_nonsample_tally(sample_tally, total_num_votes[i], seed)
+        final_county_tally = [sum(k) for k in zip(sample_tally, nonsample_tally)]
         if final_tally is None:
             final_tally = final_county_tally
         else:
