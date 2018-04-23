@@ -1,6 +1,6 @@
 # bptool.py
 # Authors: Ronald L. Rivest, Mayuri Sridhar, Zara A Perumal
-# April 19, 2018
+# April 22, 2018
 # python3
 
 """
@@ -15,7 +15,7 @@ sample its collection of paper ballots.
 The Bayesian model uses a prior pseudocount of "+1" for each candidate.
 
 If this module is imported, rather than used stand-alone, then the procedure
-    compute_win_probs 
+    compute_win_probs
 can compute the desired probability of each candidate winning a full recount,
 given sample tallies for each county.
 
@@ -46,8 +46,9 @@ import argparse
 
 from copy import deepcopy
 import csv
-import numpy as np
 import sys
+
+import numpy as np
 
 ##############################################################################
 ## Random number generation
@@ -65,10 +66,10 @@ def convert_int_to_32_bit_numpy_array(v):
     Example: input 2**64 + 5 yields np.array([5, 0, 1], dtype=int)
 
     Input Parameters:
-    
+
     -v is an integer, representing the audit seed that's being
     passed in. We expect v to be non-negative.
-    
+
     Returns:
 
     -numpy array created deterministically from v that will
@@ -91,7 +92,7 @@ def convert_int_to_32_bit_numpy_array(v):
 
 def create_rs(seed):
     """
-    Create and return a Numpy RandomState object for a given seed. 
+    Create and return a Numpy RandomState object for a given seed.
     The input seed should be a python integer, arbitrarily large.
     The purpose of this routine is to make all the audit actions reproducible.
 
@@ -134,7 +135,7 @@ def dirichlet_multinomial(sample_tally, total_num_votes, rs):
     -rs is a Numpy RandomState object that is used for any
     random functions in the simulation of the remaining votes. In particular,
     the gamma functions are made deterministic using this state.
-    
+
     Returns:
 
     -multinomial_sample is a list of integers, which sums up
@@ -181,7 +182,7 @@ def generate_nonsample_tally(sample_tally, total_num_votes, seed):
 
     -seed is an integer or None. Assuming that it isn't None, we
     use it to seed the random state for the audit.
-    
+
     Returns:
 
     -nonsample_tally is list of integers, which sums up
@@ -198,9 +199,9 @@ def generate_nonsample_tally(sample_tally, total_num_votes, seed):
 def compute_winner(sample_tallies, total_num_votes, seed, pretty_print=False):
     """
     Given a list of sample tallies (one sample tally per county)
-    a list giving the total number of votes cast in each county, 
+    a list giving the total number of votes cast in each county,
     and a random seed (an integer)
-    compute the winner in a single simulation. 
+    compute the winner in a single simulation.
     For each county, we use the Dirichlet-Multinomial distribution to generate
     a nonsample tally. Then, we sum over all the counties to produce our
     final tally and calculate the predicted winner over all the counties in
@@ -222,7 +223,7 @@ def compute_winner(sample_tallies, total_num_votes, seed, pretty_print=False):
     -pretty_print is a Boolean, which defaults to False. When it's set to
     True, we print the winning candidate, the number of votes they have
     received and the final vote tally for all the candidates.
-    
+
     Returns:
 
     -winner is an integer, representing the index of the candidate who
@@ -255,12 +256,13 @@ def compute_win_probs(sample_tallies,
                       candidate_names):
     """
 
-    Runs num_trials simulations of the Bayesian audit to estimate the probability that
-    each candidate would win a full recount.
+    Runs num_trials simulations of the Bayesian audit to estimate
+    the probability that each candidate would win a full recount.
 
-    In particular, we run a single iteration of a Bayesian audit (extend each county's
-    sample to simulate all the votes in the county and calculate the overall winner
-    across counties) num_trials times.
+    In particular, we run a single iteration of a Bayesian audit
+    (extend each county's sample to simulate all the votes in the
+    county and calculate the overall winner across counties)
+    num_trials times.
 
     Input Parameters:
 
@@ -275,16 +277,18 @@ def compute_win_probs(sample_tallies,
     -seed is an integer or None. Assuming that it isn't None, we
     use it to seed the random state for the audit.
 
-    -num_trials is an integer which represents how many simulations of the Bayesian
-    audit we run, to estimate the win probabilities of the candidates.
+    -num_trials is an integer which represents how many simulations
+    of the Bayesian audit we run, to estimate the win probabilities
+    of the candidates.
 
     -candidate_names is an ordered list of strings, containing the name of
     every candidate in the contest we are auditing.
 
     Returns:
 
-    -win_probs is a list of pairs (i, p) where p is the fractional representation of the
-    number of trials that candidate i has won out of the num_trials simulations.
+    -win_probs is a list of pairs (i, p) where p is the fractional
+    representation of the number of trials that candidate i has won
+    out of the num_trials simulations.
     """
 
     num_candidates = len(candidate_names)
@@ -293,10 +297,10 @@ def compute_win_probs(sample_tallies,
         # We want a different seed per trial.
         # Adding i to seed caused correlations, as numpy apparently
         # adds one per trial, so we multiply i by 314...
-        seed_i = seed + i*314159265                 
+        seed_i = seed + i*314159265
         winner = compute_winner(sample_tallies,
-                               total_num_votes,
-                               seed_i)
+                                total_num_votes,
+                                seed_i)
         win_count[winner+1] += 1
     win_probs = [(i, win_count[i]/float(num_trials))
                  for i in range(1, len(win_count))]
@@ -317,8 +321,9 @@ def print_results(candidate_names, win_probs):
     -candidate_names is an ordered list of strings, containing the name of
     every candidate in the contest we are auditing.
 
-    -win_probs is a list of pairs (i, p) where p is the fractional representation of the
-    number of trials that candidate i has won out of the num_trials simulations.
+    -win_probs is a list of pairs (i, p) where p is the fractional
+    representation of the number of trials that candidate i has won
+    out of the num_trials simulations.
 
     Returns:
 
@@ -326,7 +331,7 @@ def print_results(candidate_names, win_probs):
     the simulations.
     """
 
-    print("BPTOOL (version 0.8)")
+    print("BPTOOL (Bayesian ballot-polling tool version 0.8)")
 
     want_sorted_results = True
     if want_sorted_results:
@@ -388,7 +393,7 @@ def preprocess_csv(path_to_csv):
                     total_num_votes.append(int(row[key]))
                 else:
                     count = int(row[key].strip())
-                    assert 0 <= count 
+                    assert count >= 0
                     sample_tally.append(count)
             sample_tallies.append(sample_tally)
 
@@ -398,19 +403,26 @@ def preprocess_csv(path_to_csv):
     return sample_tallies, total_num_votes, candidate_names
 
 
-if __name__ == '__main__':
+def main():
+    """
+    Parse command-line arguments, compute and print answers.
+    """
 
-    parser = argparse.ArgumentParser(description='Bayesian Audit Process For A Single Contest '
-                                                 'Across One or More Counties')
+    parser = argparse.ArgumentParser(description=\
+                                     'Bayesian Audit Process For'
+                                     'A Single Contest '
+                                     'Across One or More Counties')
 
     parser.add_argument("total_num_votes",
                         nargs="?",
-                        help="(Optional: for single-county audits:) The total number of votes"
+                        help="(Optional: for single-county audits:)"
+                             "The total number of votes"
                              "(including the already audited ones) "
                              "that were cast in the election.")
 
     parser.add_argument("single_county_tally",
-                        help="(Optional: for single-county audits:) the tally given as space separated numbers,"
+                        help="(Optional: for single-county audits:)"
+                             " the tally given as space separated numbers,"
                              "e.g.  5 30 25",
                         nargs="*",
                         default=[],
@@ -418,31 +430,33 @@ if __name__ == '__main__':
 
     parser.add_argument("--path_to_csv",
                         help="If the election spans multiple counties, "
-                             "the sample tallies should be given in a csv file." 
+                             "the sample tallies should be given in a csv file."
                              "Give here the csv file pathname as an argument. "
                              "In the header row, one of the column names "
-                             "of the csv file must be Total Votes and another can be "
-                             "County Name. Other columns are the names "
+                             "of the csv file must be Total Votes and another "
+                             "can be County Name. Other columns are the names "
                              "or identifiers for candidates.")
 
     parser.add_argument("--audit_seed",
-                        help="For reproducibility, we provide the option to seed the "
-                             "randomness in the audit. If the same seed is provided, the audit "
-                             "will return the same results.",
+                        help="For reproducibility, we provide the option to "
+                             "seed the randomness in the audit. If the same "
+                             "seed is provided, the audit will return the "
+                             "same results.",
                         type=int,
                         default=1)
 
     parser.add_argument("--num_trials",
                         help="Bayesian audits work by simulating the data "
-                             "which hasn't been sampled to estimate the chance that "
-                             "each candidate would win a full hand recount. "
-                             "This argument specifies how many trials are done to "
-                             "compute these estimates.",
+                             "which hasn't been sampled to estimate the "
+                             "chance that each candidate would win a full "
+                             "hand recount. This argument specifies how "
+                             "many trials are done to compute these "
+                             "estimates.",
                         type=int,
                         default=10000)
 
     args = parser.parse_args()
-    if args.path_to_csv==None and args.total_num_votes==None:
+    if args.path_to_csv is None and args.total_num_votes is None:
         parser.print_help()
         sys.exit()
 
@@ -456,10 +470,15 @@ if __name__ == '__main__':
         sample_tallies = [args.single_county_tally]
         candidate_names = list(range(1, len(sample_tallies[0]) + 1))
 
-    win_probs = compute_win_probs(
+    win_probs = compute_win_probs(\
                     sample_tallies,
                     total_num_votes,
                     args.audit_seed,
                     args.num_trials,
                     candidate_names)
     print_results(candidate_names, win_probs)
+
+
+if __name__ == '__main__':
+
+    main()
