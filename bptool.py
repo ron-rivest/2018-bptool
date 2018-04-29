@@ -10,7 +10,7 @@ model, in a ballot-polling audit of a plurality election.  The
 election may be single-jurisdiction or multi-jurisdiction.  In this
 module we call a jurisdiction a "county" for convenience, although it
 may be a precinct or a state or something else, as long as you can
-sample its collection of paper ballots.
+sample from its collection of paper ballots.
 
 The Bayesian model uses a prior pseudocount of "+1" for each candidate.
 
@@ -39,8 +39,24 @@ For command-line usage, there are really two modes:
 
 There are optional parameters as well, to see the documentation of them, do
     python bptool.py --h
-"""
 
+More description of Bayesian auditing methods can be found in:
+
+    A Bayesian Method for Auditing Elections
+    by Ronald L. Rivest and Emily Shen
+    EVN/WOTE'12 Proceedings
+    http://people.csail.mit.edu/rivest/pubs.html#RS12z
+
+    Bayesian Tabulation Audits: Explained and Extended
+    by Ronald L. Rivest 
+    2018
+    http://people.csail.mit.edu/rivest/pubs.html#Riv18a    
+
+    Bayesian Election Audits in One Page
+    by Ronald L. Rivest
+    2018
+    http://people.csail.mit.edu/rivest/pubs.html#Riv18b    
+"""
 
 import argparse
 
