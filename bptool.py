@@ -212,7 +212,8 @@ def generate_nonsample_tally(sample_tally, total_num_votes, seed):
     return nonsample_tally
 
 
-def compute_winner(sample_tallies, total_num_votes, seed, pretty_print=False):
+def compute_winner(sample_tallies, total_num_votes, vote_for_n,
+                   seed, pretty_print=False):
     """
     Given a list of sample tallies (one sample tally per county)
     a list giving the total number of votes cast in each county,
@@ -236,6 +237,12 @@ def compute_winner(sample_tallies, total_num_votes, seed, pretty_print=False):
     -seed is an integer or None. Assuming that it isn't None, we
     use it to seed the random state for the audit.
 
+    -vote_for_n is an integer, parsed from the command-line args. Its default
+    value is 1, which means we only calculate a single winner for the election.
+    For other values n, we simulate the unnsampled votes and define a win
+    for candidate i as any time they are in the top n candidates in the final
+    tally.
+
     -pretty_print is a Boolean, which defaults to False. When it's set to
     True, we print the winning candidate, the number of votes they have
     received and the final vote tally for all the candidates.
@@ -246,30 +253,41 @@ def compute_winner(sample_tallies, total_num_votes, seed, pretty_print=False):
     won the election.
     """
 
-    final_tally = None
+    final_tallies = None
     for i, sample_tally in enumerate(sample_tallies):   # loop over counties
         nonsample_tally = generate_nonsample_tally(
             sample_tally, total_num_votes[i], seed)
         final_county_tally = [sum(k)
                               for k in zip(sample_tally, nonsample_tally)]
-        if final_tally is None:
-            final_tally = final_county_tally
+        if final_tallies is None:
+            final_tallies = final_county_tally
         else:
-            final_tally = [sum(k)
-                           for k in zip(final_tally, final_county_tally)]
-    winner = final_tally.index(max(final_tally))
+            final_tallies = [sum(k)
+                           for k in zip(final_tallies, final_county_tally)]
+    final_tallies = [(k, final_tallies[k]) for k in range(len(final_tallies))]
+    final_tallies.sort(key = lambda x: x[1])
+    winners_with_tallies = final_tallies[-vote_for_n:]
+    winners = [winner_tally[0] for winner_tally in winners_with_tallies]
     if pretty_print:
-        print('Candidate {} is the winner with {} votes. '
-              'The final vote tally for all the candidates was {}'.format(
-                  winner, final_tally[winner], final_tally))
-    return winner
+        results_str = ''
+        for i in range(len(winners)):
+            results_str += (
+                "Candidate {} is a winner with {} votes. ".format(
+                winners[i], final_tallies[winners[i]][1]))
+        results_str += (
+            "The final vote tally for all the candidates "
+            "was {}".format(
+                [final_tally[1] for final_tally in final_tallies]))
+        print(results_str)
+    return winners
 
 
 def compute_win_probs(sample_tallies,
                       total_num_votes,
                       seed,
                       num_trials,
-                      candidate_names):
+                      candidate_names,
+                      vote_for_n):
     """
 
     Runs num_trials simulations of the Bayesian audit to estimate
@@ -300,6 +318,12 @@ def compute_win_probs(sample_tallies,
     -candidate_names is an ordered list of strings, containing the name of
     every candidate in the contest we are auditing.
 
+    -vote_for_n is an integer, parsed from the command-line args. Its default
+    value is 1, which means we only calculate a single winner for the election.
+    For other values n, we simulate the unnsampled votes and define a win
+    for candidate i as any time they are in the top n candidates in the final
+    tally.
+
     Returns:
 
     -win_probs is a list of pairs (i, p) where p is the fractional
@@ -314,10 +338,12 @@ def compute_win_probs(sample_tallies,
         # Adding i to seed caused correlations, as numpy apparently
         # adds one per trial, so we multiply i by 314...
         seed_i = seed + i*314159265
-        winner = compute_winner(sample_tallies,
+        winners = compute_winner(sample_tallies,
                                 total_num_votes,
+                                vote_for_n,
                                 seed_i)
-        win_count[winner+1] += 1
+        for winner in winners:
+            win_count[winner+1] += 1
     win_probs = [(i, win_count[i]/float(num_trials))
                  for i in range(1, len(win_count))]
     return win_probs
@@ -327,7 +353,7 @@ def compute_win_probs(sample_tallies,
 ## Routines for command-line interface and file (csv) input
 ##############################################################################
 
-def print_results(candidate_names, win_probs):
+def print_results(candidate_names, win_probs, vote_for_n):
     """
     Given list of candidate_names and win_probs pairs, print summary
     of the Bayesian audit simulations.
@@ -340,6 +366,12 @@ def print_results(candidate_names, win_probs):
     -win_probs is a list of pairs (i, p) where p is the fractional
     representation of the number of trials that candidate i has won
     out of the num_trials simulations.
+
+    -vote_for_n is an integer, parsed from the command-line args. Its default
+    value is 1, which means we only calculate a single winner for the election.
+    For other values n, we simulate the unnsampled votes and define a win
+    for candidate i as any time they are in the top n candidates in the final
+    tally.
 
     Returns:
 
@@ -356,9 +388,16 @@ def print_results(candidate_names, win_probs):
     else:
         sorted_win_probs = win_probs
 
-    print("{:<24s} \t {:<s}"
-          .format("Candidate name",
-                  "Estimated probability of winning a full recount"))
+    if vote_for_n == 1:
+        print("{:<24s} \t {:<s}"
+              .format("Candidate name",
+                      "Estimated probability of winning a full recount"))
+    else:
+        print("{:<24s} \t {:<s} {} {:<s}"
+              .format("Candidate name",
+                      "Estimated probability of being among the top",
+                      vote_for_n,
+                      "winners in a full recount"))
 
     for candidate_index, prob in sorted_win_probs:
         candidate_name = str(candidate_names[candidate_index - 1])
@@ -471,6 +510,16 @@ def main():
                         type=int,
                         default=10000)
 
+    parser.add_argument("--vote_for_n",
+                        help="If we want to simulate voting for multiple "
+                        "candidates at a time, we can use this parameter "
+                        "to specify how many candidates a single voter "
+                        "can vote for. The simulations will then count a candidate"
+                        "as a winner, each time they appear in the top N "
+                        "of the candidates, in the simulated elections.",
+                        type=int,
+                        default=1)
+
     args = parser.parse_args()
     if args.path_to_csv is None and args.total_num_votes is None:
         parser.print_help()
@@ -486,13 +535,16 @@ def main():
         sample_tallies = [args.single_county_tally]
         candidate_names = list(range(1, len(sample_tallies[0]) + 1))
 
+    vote_for_n = args.vote_for_n
+
     win_probs = compute_win_probs(\
                     sample_tallies,
                     total_num_votes,
                     args.audit_seed,
                     args.num_trials,
-                    candidate_names)
-    print_results(candidate_names, win_probs)
+                    candidate_names,
+                    vote_for_n)
+    print_results(candidate_names, win_probs, vote_for_n)
 
 
 if __name__ == '__main__':
