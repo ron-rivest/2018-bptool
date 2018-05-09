@@ -216,6 +216,7 @@ def get_html_results(candidate_names, win_probs):
         results_str += ('<td style="text-align:center">{:6.2f} %</td>').format(100*prob)
         results_str += '</tr>'
     results_str += '</table>'
+    results_str += '<p> Click <a href="./">here</a> to go back to the home page and try again.</p>'
     return results_str
 
 server_conf = os.path.join(os.path.dirname(__file__), 'server_conf.conf')
