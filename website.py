@@ -2,15 +2,8 @@
 Simple website form for using BPTool online. Can be hosted
 by running "python website.py"
 """
-
-import argparse
-
-from copy import deepcopy
 import cherrypy
-import csv
-import numpy as np
 import os.path
-import sys
 
 import bptool
 
@@ -20,6 +13,8 @@ class BPToolPage:
     @cherrypy.expose
     def index(self):
         # Ask for the parameters required for the Bayesian Audit.
+        # Style parameters from 
+        # https://www.w3schools.com/css/tryit.asp?filename=trycss_forms
         return '''
             <style>
             input[type=text], select {
