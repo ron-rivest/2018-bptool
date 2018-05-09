@@ -23,7 +23,7 @@ class BPToolPage:
         return '''
             <style>
             input[type=text], select {
-                width: 100%;
+                width: 50%;
                 padding: 12px 20px;
                 margin: 8px 0;
                 display: inline-block;
@@ -191,7 +191,6 @@ def get_html_results(candidate_names, win_probs):
         table, th, td { \
                  border: 1px solid black; \
         }\
-        <td style="text-align:right">\
         </style>\
         <h1> BPTOOL (Bayesian ballot-polling tool version 0.8) </h1>')
 
