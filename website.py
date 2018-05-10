@@ -68,6 +68,11 @@ class BPToolPage:
             </li>
 
             </ul>
+
+            <p> This web form provides exactly the same functionality as the Python tool
+            <a href=https://github.com/ron-rivest/2018-bptool>BPTool.py</a>. The Python tool
+            requires an environment set up with Python 3 and Numpy.</p>
+
             <form action="Query" method="GET">
             <p>Please specify whether you are entering data for a single county or multiple
             counties.</p>
@@ -103,8 +108,8 @@ class BPToolPage:
             <input type="text" name="total" />
             <p>For reproducibility, we provide the option to seed the randomness in the audit.
             If the same seed is provided, the audit will return the 
-            same results. This is an optional parameter. If you'd like to specify
-            a seed, pass in an integer argument here.</p>
+            same results. This is an optional parameter, which defaults to 1. If you'd like to specify
+            a different seed, pass in an integer argument here.</p>
             <input type="text" name="seed" />
             <p>Bayesian audits work by simulating the data which hasn't been sampled to
             estimate the chance that each candidate would win a full hand recount.
@@ -150,7 +155,10 @@ class BPToolPage:
                         seed=int(seed),
                         num_trials=int(num_trials),
                         candidate_names=candidate_names,
-                        vote_for_n=1 # this is the default, where each person votes for 1 candidate
+                        # default pseudocount_for_prior, prior of 1 vote per candidate.
+                        pseudocount_for_prior=1,
+                        # this is the default vote_for_n value, where each person votes for 1 candidate
+                        vote_for_n=1
                     )
                 return get_html_results(candidate_names, win_probs)
             except:

@@ -132,7 +132,8 @@ def create_rs(seed):
 ## Main computational routines
 ##############################################################################
 
-def dirichlet_multinomial(sample_tally, total_num_votes, rs):
+def dirichlet_multinomial(
+    sample_tally, total_num_votes, rs, pseudocount_for_prior):
     """
     Return a sample according to the Dirichlet multinomial distribution,
     given a sample tally, the number of votes in the election,
@@ -152,6 +153,11 @@ def dirichlet_multinomial(sample_tally, total_num_votes, rs):
     random functions in the simulation of the remaining votes. In particular,
     the gamma functions are made deterministic using this state.
 
+    -pseudocount_for_prior is an integer, defining how many votes we add
+    in by default, for each candidate, as a prior. The default of 1 gives
+    a uniform prior over all the candidates that they each automatically
+    receive 1 vote.
+
     Returns:
 
     -multinomial_sample is a list of integers, which sums up
@@ -167,7 +173,6 @@ def dirichlet_multinomial(sample_tally, total_num_votes, rs):
 
     nonsample_size = total_num_votes - sample_size
 
-    pseudocount_for_prior = 1
     sample_with_prior = deepcopy(sample_tally)
     sample_with_prior = [k + pseudocount_for_prior
                          for k in sample_with_prior]
@@ -181,7 +186,8 @@ def dirichlet_multinomial(sample_tally, total_num_votes, rs):
     return multinomial_sample
 
 
-def generate_nonsample_tally(sample_tally, total_num_votes, seed):
+def generate_nonsample_tally(
+    sample_tally, total_num_votes, seed, pseudocount_for_prior):
     """
     Given a sample_tally, the total number of votes in an election, and a seed,
     generate the nonsample tally in the election using the Dirichlet multinomial
@@ -199,6 +205,11 @@ def generate_nonsample_tally(sample_tally, total_num_votes, seed):
     -seed is an integer or None. Assuming that it isn't None, we
     use it to seed the random state for the audit.
 
+    -pseudocount_for_prior is an integer, defining how many votes we add
+    in by default, for each candidate, as a prior. The default of 1 gives
+    a uniform prior over all the candidates that they each automatically
+    receive 1 vote.
+
     Returns:
 
     -nonsample_tally is list of integers, which sums up
@@ -208,12 +219,13 @@ def generate_nonsample_tally(sample_tally, total_num_votes, seed):
     """
 
     rs = create_rs(seed)
-    nonsample_tally = dirichlet_multinomial(sample_tally, total_num_votes, rs)
+    nonsample_tally = dirichlet_multinomial(
+        sample_tally, total_num_votes, rs, pseudocount_for_prior)
     return nonsample_tally
 
 
 def compute_winner(sample_tallies, total_num_votes, vote_for_n,
-                   seed, pretty_print=False):
+                   seed, pseudocount_for_prior, pretty_print=False):
     """
     Given a list of sample tallies (one sample tally per county)
     a list giving the total number of votes cast in each county,
@@ -243,6 +255,11 @@ def compute_winner(sample_tallies, total_num_votes, vote_for_n,
     for candidate i as any time they are in the top n candidates in the final
     tally.
 
+    -pseudocount_for_prior is an integer, defining how many votes we add
+    in by default, for each candidate, as a prior. The default of 1 gives
+    a uniform prior over all the candidates that they each automatically
+    receive 1 vote.
+
     -pretty_print is a Boolean, which defaults to False. When it's set to
     True, we print the winning candidate, the number of votes they have
     received and the final vote tally for all the candidates.
@@ -256,7 +273,7 @@ def compute_winner(sample_tallies, total_num_votes, vote_for_n,
     final_tallies = None
     for i, sample_tally in enumerate(sample_tallies):   # loop over counties
         nonsample_tally = generate_nonsample_tally(
-            sample_tally, total_num_votes[i], seed)
+            sample_tally, total_num_votes[i], seed, pseudocount_for_prior)
         final_county_tally = [sum(k)
                               for k in zip(sample_tally, nonsample_tally)]
         if final_tallies is None:
@@ -287,7 +304,8 @@ def compute_win_probs(sample_tallies,
                       seed,
                       num_trials,
                       candidate_names,
-                      vote_for_n):
+                      vote_for_n,
+                      pseudocount_for_prior=1):
     """
 
     Runs num_trials simulations of the Bayesian audit to estimate
@@ -324,6 +342,11 @@ def compute_win_probs(sample_tallies,
     for candidate i as any time they are in the top n candidates in the final
     tally.
 
+    -pseudocount_for_prior is an integer, defining how many votes we add
+    in by default, for each candidate, as a prior. The default of 1 gives
+    a uniform prior over all the candidates that they each automatically
+    receive 1 vote.
+
     Returns:
 
     -win_probs is a list of pairs (i, p) where p is the fractional
@@ -341,7 +364,8 @@ def compute_win_probs(sample_tallies,
         winners = compute_winner(sample_tallies,
                                 total_num_votes,
                                 vote_for_n,
-                                seed_i)
+                                seed_i,
+                                pseudocount_for_prior)
         for winner in winners:
             win_count[winner+1] += 1
     win_probs = [(i, win_count[i]/float(num_trials))
@@ -520,6 +544,14 @@ def main():
                         type=int,
                         default=1)
 
+    parser.add_argument("--pseudocount_for_prior",
+                        help="When we have no votes for a candidate, the Bayesian "
+                             "prior adds in some number of votes for all candidates, "
+                             "so that we have some probability of generating new "
+                             "votes for each. This prior defaults to 1.",
+                        type=int,
+                        default=1)
+
     args = parser.parse_args()
     if args.path_to_csv is None and args.total_num_votes is None:
         parser.print_help()
@@ -543,7 +575,8 @@ def main():
                     args.audit_seed,
                     args.num_trials,
                     candidate_names,
-                    vote_for_n)
+                    vote_for_n,
+                    args.pseudocount_for_prior)
     print_results(candidate_names, win_probs, vote_for_n)
 
 
