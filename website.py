@@ -36,18 +36,22 @@ class BPToolPage:
                 border-radius: 4px;
             }
             </style>
-            <h1> Bayesian Ballot Polling Tool </h1>
-            <p>This form provides a simple way to computing the winning probabilities
-            for various candidates, given audit sample data, using a Bayesian
-            model, in a ballot-polling audit of a plurality election.  The
-            election may be single-jurisdiction or multi-jurisdiction.  In this
-            module we call a jurisdiction a "county" for convenience, although it
+            <h1> Bayesian Ballot-Polling Tool </h1>
+            <p>
+            This page enables you to compute
+            the probability that each candidate would win in a full manual recount
+            given audit sample data for a single contest.
+            The computation uses a Bayesian
+            model for a ballot-polling audit.
+            The contest is assumed to be a plurality contest (most votes win).
+            The
+            election may be single-jurisdiction or multi-jurisdiction.  Here
+            we call a jurisdiction a "county" for convenience, although it
             may be a precinct or a state or something else, as long as you can
             sample from its collection of paper ballots.</p>
 
-            <p> The Bayesian model uses a prior pseudocount of "+1" for each candidate.</p>
-
-            <p> More description of Bayesian auditing methods can be found in: </p>
+            <h2> References and Code</h2>
+            <p> Descriptions of Bayesian auditing methods can be found in: </p>
             <ul>
             <li><a href="http://people.csail.mit.edu/rivest/pubs.html#RS12z">
             A Bayesian Method for Auditing Elections</a>
@@ -69,55 +73,130 @@ class BPToolPage:
 
             </ul>
 
-            <p> This web form provides exactly the same functionality as the Python tool
-            <a href=https://github.com/ron-rivest/2018-bptool>BPTool.py</a>. The Python tool
-            requires an environment set up with Python 3 and Numpy.</p>
+            <h2>Implementation Note</h2>
+            <p> The code for this tool is available on github at 
+            <a href="https://github.com/ron-rivest/2018-bptool">www.github.com/ron-rivest/2018-bptool</a>.
+            This web form provides exactly the same functionality as the stand-alone 
+            Python tool
+            <a href=https://github.com/ron-rivest/2018-bptool>www.github.com/ron-rivest/2018-bptool/BPTool.py</a>. 
+            The Python tool
+            requires an environment set up with Python 3 and Numpy.
+            This web form was implemented using 
+            <a href="https://github.com/cherrypy/cherrypy">
+            CherryPy
+            </a>.
+
+            </p>
+
+
+            <h2>Step 1: Select Single-County or Multi-County Audit</h2>
 
             <form action="Query" method="GET">
-            <p>Please specify whether you are entering data for a single county or multiple
+            <p>Select whether you are entering data for a single county or for multiple
             counties.</p>
+
             <select id="county" name="county">
               <option value="single_county">Single County</option>
               <option value="multiple_counties">Multiple Counties</option>
             </select>
 
-            <p> What are the names of the candidates? Please enter as a comma-separated list.</p>
-            <input type="text" name="candidate_names" />
-            <p>What is the sample tally? Please enter as a comma-separated list of numbers for a
-            single county, for example: 1, 3. </p>
 
-            <p>If you would like to enter the tallies for multiple counties, separate
-            the tallies between counties with a semicolon. For instance, a tally of the form:
-            1, 3; 2, 4 implies there is 1 vote for candidate A in county 1, 3 votes for candidate
-            B in county 1, 2 votes for candidate A in county 2 and 4 votes for candidate B in county 2.</p>
+            <h2>Step 2: Specify Candidate Names</h2>
 
-            <p>Note that this must be in the same order as the name of the candidates specified above. For
-            instance, if your input for the names was Alice, Bob and the tally is 2, 3, this is interpreted
-            as two votes for Alice and 3 for Bob.</p>
+            <p> 
+            In the box below, 
+            specify the names of the candidates as a comma-separated list.
+            </p>
 
-            <input type="text" name="sample" />
-            <p>What is the total number of votes in the county? Please enter a number for a single county, like
-            50.</p>
-            <p> For multiple counties, enter a comma-separated list for multiple counties. For instance,
-            50, 60 implies there are 50 votes total in County 1 and 60 in County 2.</p>
+            <p>
+            Example:
+            <tt>Alice, Bob</tt>
+            </p>
+            
+            Candidate names: <input type="text" name="candidate_names" />
 
-            <p>Like before, this must
-            be in the same order as the sample tallies. That is, if the sample is 1, 2; 3, 4 and the
-            total number of votes are 50, 60, this is interpreted as 1 vote for A from county 1,
-            2 votes for B from county 1, 50 votes total in county 1 etc. </p>
-            <input type="text" name="total" />
-            <p>For reproducibility, we provide the option to seed the randomness in the audit.
-            If the same seed is provided, the audit will return the 
-            same results. This is an optional parameter, which defaults to 1. If you'd like to specify
-            a different seed, pass in an integer argument here.</p>
-            <input type="text" name="seed" />
+
+            <h2>Step 3: Specify votes cast per county</h2>
+            <p>
+            In the box below,
+            enter the total number of votes cast in each county.
+            For multiple counties, separate with commas.
+            </p>
+
+            <p>
+            Single-county example:
+            <tt>101277</tt>
+            </p>
+            <p>
+            Multi-county example:
+            <tt>101277, 231586, 50411</tt>
+            </p>
+
+            Votes cast per county: <input type="text" name="total" />
+
+
+            <h2>Step 4: Specify tally for audited sample</h2>
+
+            <p>In the box below, specify the tally for the audited sample.
+
+            <p>
+            For a single county, just give
+            a comma-separated list of numbers
+            The tally entries must be in the same order as the name of the candidates 
+            specified above. 
+            </p>
+
+
+            <p>For multiple counties, separate
+            the tallies for different counties with a semicolon. 
+            The county segments must be in the same order as used
+            earlier for the county sizes.
+
+            <p>
+            Single-county example:
+            <tt>47, 62</tt>
+            </p>
+            <p>
+            Multi-county example:
+            <tt> 47, 62; 101, 84; 17, 99</tt>
+            </p>
+            <p>
+            In this multi-county (three-county two-candidate) example, 
+            the sample in county 2 had 101 votes for Alice.
+            </p>
+
+            Sample tallies by county: <input type="text" name="sample" />
+
+
+            <h2>(Optional) Specify random number seed</h2>
+            <p>
+            The computation uses a random number seed, which defaults to 1.
+            You may if you wish enter a different seed here.
+            (Using the same seed with the same data always returns the same results.)
+            This is an optional parameter; there should be no reason to change it.
+            </p>
+
+            Seed: <input type="text" name="seed" />
+
+            <h2>(Optional) Specify number of trials</h2>
             <p>Bayesian audits work by simulating the data which hasn't been sampled to
             estimate the chance that each candidate would win a full hand recount.
-            This argument specifies how many trials are done to compute these estimates.
-            This is an optional parameter, defaulting to 10000. If you'd like to change this,
-            please enter an integer argument here.</p>
-            <input type="text" name="num_trials" />
+            You may specify in the box below the number of 
+            trials used to compute these estimates.
+            This is an optional parameter, defaulting to 10000.  Making it smaller
+            will decrease accuracy and improve running time; making it larger will
+            improve accuracy and increase running time. 
+            </p>
+         
+            Number of trials:<input type="text" name="num_trials" />
+        
+            <h2>Compute results</h2>
+            Click on the "Submit" button below to compute the desired answers,
+            which will be shown on a separate page.
             <input type="submit" />
+
+            Note: The Bayesian prior is represented by a pseudocount of one vote for
+            each choice.  This may become an input parameter.
             </form>'''
 
     @cherrypy.expose
@@ -208,7 +287,7 @@ def get_html_results(candidate_names, win_probs):
     results_str += '<tr>'
     results_str += ("<th>{:<24s}</th> <th>{:<s}</th>"
           .format("Candidate name",
-                  "Estimated probability of winning a full recount"))
+                  "Estimated probability of winning a full manual recount"))
     results_str += '</tr>'
 
     for candidate_index, prob in sorted_win_probs:
@@ -218,7 +297,7 @@ def get_html_results(candidate_names, win_probs):
         results_str += ('<td style="text-align:center">{:6.2f} %</td>').format(100*prob)
         results_str += '</tr>'
     results_str += '</table>'
-    results_str += '<p> Click <a href="./">here</a> to go back to the home page and try again.</p>'
+    results_str += '<p> Click <a href="./">here</a> to go back to the main page.</p>'
     return results_str
 
 server_conf = os.path.join(os.path.dirname(__file__), 'server_conf.conf')
