@@ -101,11 +101,11 @@ class BPToolPage:
             </select>
 
 
-            <h2>Step 2: Specify Candidate Names</h2>
+            <h2>Step 2: Enter Candidate Names</h2>
 
             <p> 
             In the box below, 
-            specify the names of the candidates as a comma-separated list.
+            enter the names of the candidates as a comma-separated list.
             </p>
 
             <p>
@@ -116,11 +116,11 @@ class BPToolPage:
             Candidate names: <input type="text" name="candidate_names" />
 
 
-            <h2>Step 3: Specify votes cast per county</h2>
+            <h2>Step 3: Enter number of votes cast per county</h2>
             <p>
             In the box below,
             enter the total number of votes cast in each county.
-            For multiple counties, separate with commas.
+            For multiple counties, separate entries with commas.
             </p>
 
             <p>
@@ -135,15 +135,17 @@ class BPToolPage:
             Votes cast per county: <input type="text" name="total" />
 
 
-            <h2>Step 4: Specify tally for audited sample</h2>
+            <h2>Step 4: Enter tally for audit sample</h2>
 
-            <p>In the box below, specify the tally for the audited sample.
+            <p>In the box below, specify the tally for the sample drawn so far
+            in the audit.
+            </p>
 
             <p>
             For a single county, just give
-            a comma-separated list of numbers
-            The tally entries must be in the same order as the name of the candidates 
-            specified above. 
+            a comma-separated list of numbers, one tally count per candidate,
+            in the same order as the candidate names
+            given above. 
             </p>
 
 
@@ -154,7 +156,9 @@ class BPToolPage:
 
             <p>
             Single-county example:
-            <tt>47, 62</tt>
+            <tt>47, 62</tt> </p>
+            In this single-county two-candidate example, the audit has
+            seen 47 votes for Alice and 62 votes for Bob.
             </p>
             <p>
             Multi-county example:
@@ -196,7 +200,7 @@ class BPToolPage:
             <input type="submit" />
 
             Note: The Bayesian prior is represented by a pseudocount of one vote for
-            each choice.  This may become an input parameter.
+            each choice.  This may become an optional input parameter later.
             </form>'''
 
     @cherrypy.expose
