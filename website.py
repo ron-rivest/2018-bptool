@@ -89,19 +89,10 @@ class BPToolPage:
             </p>
 
 
-            <h2>Step 1: Select Single-County or Multi-County Audit</h2>
 
             <form action="Query" method="GET">
-            <p>Select whether you are entering data for a single county or for multiple
-            counties.</p>
 
-            <select id="county" name="county">
-              <option value="single_county">Single County</option>
-              <option value="multiple_counties">Multiple Counties</option>
-            </select>
-
-
-            <h2>Step 2: Enter Candidate Names</h2>
+            <h2>Step 1: Enter Candidate Names</h2>
 
             <p> 
             In the box below, 
@@ -115,6 +106,17 @@ class BPToolPage:
             
             Candidate names: <input type="text" name="candidate_names" />
 
+            <h2>Step 2: Enter Number of Counties</h2>
+
+            <p>In the box below, enter the number of counties being audited
+            as a comma-separated list.</p>
+
+            <p>
+            Example:
+            <tt>4</tt>
+            </p>
+
+            Number of Counties: <input type="text" name="num_counties" />
 
             <h2>Step 3: Enter number of votes cast per county</h2>
             <p>
@@ -206,7 +208,7 @@ class BPToolPage:
     @cherrypy.expose
     def Query(
         self, sample, total, seed,
-        county, num_trials, candidate_names):
+        num_counties, num_trials, candidate_names):
 
         if sample is not "" and total is not "":
             try:
@@ -215,22 +217,42 @@ class BPToolPage:
                 if num_trials == "":
                     num_trials = 10000
 
-                if county == 'single_county':
+                if candidate_names == "":
+                    candidate_names = list(range(1, len(sample_tallies[0]) + 1))
+                else:
+                    candidate_names = [k.strip() for k in candidate_names.split(',')]
+
+                if int(num_counties) == 1:
+                    try:
+                        total = int(total)
+                    except Exception as e:
+                        raise AssertionError("For a single county contest, the \
+                            total number of votes should be submitted as an integer.")
+                    assert(';' not in sample), "For a single county contest, the \
+                        number of samples should be specified as a single comma-separated \
+                        list, with no semicolons."
                     total_num_votes = [int(total)]
                     sample_tallies = [[int(k.strip()) for k in sample.split(',')]]
+                    assert(len(sample_tallies) == len(candidate_names)), "The length \
+                        of the sample tallies list, for a single county, should equal \
+                        the number of candidates in the race."
                 else:
                     total_num_votes = [int(k.strip()) for k in total.split(',')]
                     split_by_county = [k.strip() for k in sample.split(';')]
                     sample_tallies = []
                     for i in range(len(split_by_county)):
                         tmp = [int(k) for k in split_by_county[i].split(',')]
+                        assert(len(tmp) == len(candidate_names)), "The list \
+                        of the sample tallies, in any given county, should be a \
+                        comma-separated list with length equal to the number of \
+                        candidates in the race. This isn't true for County {}".format(i+1)
                         sample_tallies.append(tmp)
-                    assert(len(total_num_votes) == len(sample_tallies))
-
-                if candidate_names == "":
-                    candidate_names = list(range(1, len(sample_tallies[0]) + 1))
-                else:
-                    candidate_names = [k.strip() for k in candidate_names.split(',')]
+                    assert(len(total_num_votes) == len(sample_tallies)), "The number of \
+                        counties we specify the total number of votes for should be equal \
+                        to the number of counties we specify the sample tallies for."
+                    assert(len(sample_tallies) == int(num_counties)), "The number of counties \
+                        we specify the sample tallies for should be equal to the total number \
+                        of counties we are auditing."
 
                 win_probs = bptool.compute_win_probs(\
                         sample_tallies=sample_tallies,
@@ -244,11 +266,10 @@ class BPToolPage:
                         vote_for_n=1
                     )
                 return get_html_results(candidate_names, win_probs)
-            except:
+            except Exception as e:
                 return 'Please make sure all inputs are following the correct format and \
-                re-enter them <a href="./">here</a>. A common reason for this error is \
-                if you fill in samples for multiple counties but fail to click the appropriate \
-                option in the first drop-down menu.'
+                re-enter them <a href="./">here</a>.<br> \
+                The submitted form caused the following error message: <br> {}'.format(e)
         else:
             return 'Please enter the sample and the total number of votes <a href="./">here</a>.'
 
