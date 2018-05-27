@@ -5,15 +5,15 @@ import collections
 
 import numpy as np
 
-def generate_ballots(margin, total_num_votes):
+def generate_ballots(voteshares, total_num_votes):
 	"""
-	Generates an unshuffled list of ballots for a 2-candidate
-	election given the margin between the winner and the
-	runner-up.
+	Generates an unshuffled list of ballots for an election,
+	given the percentage of the votes each candidate receives
+	and the total number of votes cast.
 
 	Input params:
-	-margin is a float, representing the percentage margin
-	between the winner and the runner-up.
+	-voteshares is a list of floats, representing the percentage
+	of the vote that each candidate received.
 	-total_num_votes is an integer, representing the total
 	number of votes cast in the election.
 
@@ -22,15 +22,18 @@ def generate_ballots(margin, total_num_votes):
 	in the list is 0 or 1. There will be margin percent more
 	0's than 1's in this list.
 	"""
-	frac_votes_for_winner = 0.5*(1. + margin / 100.)
-	frac_votes_for_loser = 1-frac_votes_for_winner
+	num_votes = [int(total_num_votes*voteshare/100.) for voteshare in voteshares]
 
-	num_votes_for_winner = int(total_num_votes*frac_votes_for_winner)
-	num_votes_for_loser = total_num_votes - num_votes_for_winner
+	num_votes.sort()
+
+	if sum(num_votes) < total_num_votes:
+		# Add remaining votes to the runner up candidate
+		num_votes[-2] += total_num_votes - sum(num_votes)
 
 	ballots_list = []
-	ballots_list.extend([0]*num_votes_for_winner)
-	ballots_list.extend([1]*num_votes_for_loser)
+
+	for candidate in range(len(num_votes)):
+		ballots_list.extend([candidate]*num_votes[candidate])
 
 	return ballots_list
 
@@ -55,7 +58,7 @@ def shuffle_list(ballot_list, audit_seed=1):
 
 	return ballot_list
 
-def estimate_risk_limit(total_num_votes, margin, sample_size, trials_per_sample,
+def estimate_risk_limit(total_num_votes, voteshares, sample_size, trials_per_sample,
 						num_samples, audit_seed=1):
 	"""
 	Given the total number of votes in the election, the margin, and a desired
@@ -64,8 +67,8 @@ def estimate_risk_limit(total_num_votes, margin, sample_size, trials_per_sample,
 	Input params:
 	-total_num_votes is an integer, representing the total
 	number of votes cast in the election.
-	-margin is a float, representing the percentage margin
-	between the winner and the runner-up.
+	-voteshares is a list of floats, representing the percentage
+	of the vote that each candidate received.
 	-sample_size is an integer, representing the desired sample size, which
 	we are estimating the risk limit for.
 	-trials_per_sample is an integer, representing the number of trials used
@@ -78,7 +81,7 @@ def estimate_risk_limit(total_num_votes, margin, sample_size, trials_per_sample,
 	Returns:
 	-Estimated Bayesian risk across several possible samples of size sample_size.
 	"""
-	sorted_ballot_list = generate_ballots(margin, total_num_votes)
+	sorted_ballot_list = generate_ballots(voteshares, total_num_votes)
 	risk_estimates = []
 	for i in range(num_samples):
 		current_list = copy.deepcopy(sorted_ballot_list)
@@ -88,23 +91,22 @@ def estimate_risk_limit(total_num_votes, margin, sample_size, trials_per_sample,
 		sample = shuffled_list[:sample_size]
 		current_risk_estimate = 0
 		
-		seed_i = audit_seed
-		for _ in range(trials_per_sample):
-			sample_tally_dict = collections.Counter(sample)
-			sample_tally = [sample_tally_dict[0], sample_tally_dict[1]]
-			seed_i += 6723
-			nonsample_tally = bptool.generate_nonsample_tally(
-    			sample_tally,
-    			total_num_votes, seed_i, pseudocount_for_prior=1)
+		sample_tally_dict = collections.Counter(sample)
+		sample_tally = list(sample_tally_dict.items())
+		sample_tally.sort()
+		sample_tally = [tally[1] for tally in sample_tally]
 
-			if (
-				sample_tally[0] + nonsample_tally[0] <=
-				sample_tally[1] + nonsample_tally[1]
-			):
-				current_risk_estimate += 1
 
-		current_risk_estimate /= float(trials_per_sample)
-		risk_estimates.append(current_risk_estimate)
+		win_probs = bptool.compute_win_probs(
+			sample_tallies=[sample_tally],
+			total_num_votes=[total_num_votes],
+			seed=audit_seed,
+			num_trials=trials_per_sample,
+			candidate_names=list(range(len(sample_tally))),
+			vote_for_n=1)
+
+
+		risk_estimates.append(1-win_probs[-1][1])
 
 	return sum(risk_estimates) / len(risk_estimates)
 
@@ -119,10 +121,9 @@ def main():
 							 "in the election.",
 						type=int)
 
-	parser.add_argument("margin",
-						help="Enter the percentage margin between the "
-							 "winner and the runner-up in the election.",
-						type=float)
+	parser.add_argument("voteshares",
+						help="Enter the percentage of votes each candidate "
+							 "received as a comma-separated list.")
 
 	parser.add_argument("sample_size",
 						help="Enter the sample size that we are estimating "
@@ -151,18 +152,21 @@ def main():
 
 	args = parser.parse_args()
 
+	voteshares = args.voteshares
+	voteshares = [float(k.strip()) for k in voteshares.split(',')]
+
 	risk_limit = estimate_risk_limit(
 		args.total_num_votes,
-		args.margin,
+		voteshares,
 		args.sample_size,
 		args.trials_per_sample,
 		args.num_samples)
 
 	print("The estimated Bayesian risk limit for a sample size of {} in an election "
-		  "with {} votes, with a margin of {}%, will be {:6.2f}. \nThis was calculated by generating "
+		  "with {} votes, with the voteshares, {}, will be {:6.2f}. \nThis was calculated by generating "
 		  "{} different samples, of the same size, and running {} 'restore' operations "
 		  "on each sample, to estimate its risk limit.".format(
-		  	args.sample_size, args.total_num_votes, args.margin, risk_limit,
+		  	args.sample_size, args.total_num_votes, args.voteshares, risk_limit,
 		  	args.num_samples, args.trials_per_sample))
 
 if __name__ == '__main__':
