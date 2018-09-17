@@ -62,6 +62,7 @@ import argparse
 
 from copy import deepcopy
 import csv
+from math import ceil
 import sys
 
 import numpy as np
@@ -372,10 +373,148 @@ def compute_win_probs(sample_tallies,
                  for i in range(1, len(win_count))]
     return win_probs
 
+def estimate_work(sample_tallies,
+                  total_num_votes,
+                  seed,
+                  num_trials,
+                  candidate_names,
+                  risk_limit,
+                  scale_factor=0.1):
+    """
+
+    Runs several num_trials simulations of the Bayesian audit to estimate
+    the work leftover.
+
+    In particular, we run a single simulation, with the current sample
+    tally to get the Bayesian risk of the sample. Then, if the sample
+    doesn't satisfy our risk limit, we multiply each element in our
+    sample tally by (1+scale_factor). Using this, we check
+    if our sample tally is satisfied - if not, we try multiplying
+    by (1+2*scale_factor). We repeat this process until our risk
+    limit is satisfied. When our risk limit is satisfied for some candidate,
+    after multiplying each sample tally by (1+x*scale_factor), we return
+    our value for x, to estimate how much work is left in the audit.
+
+    Input Parameters:
+
+    -sample_tallies is a list of lists. Each list represents the sample tally
+    for a given county. So, sample_tallies[i] represents the tally for county
+    i. Then, sample_tallies[i][j] represents the number of votes candidate
+    j receives in county i.
+
+    -total_num_votes is an integer representing the number of
+    ballots that were cast in this election.
+
+    -seed is an integer or None. Assuming that it isn't None, we
+    use it to seed the random state for the audit.
+
+    -num_trials is an integer which represents how many simulations
+    of the Bayesian audit we run, to estimate the win probabilities
+    of the candidates, for each given sample size.
+
+    -candidate_names is an ordered list of strings, containing the name of
+    every candidate in the contest we are auditing.
+
+    -risk_limit is a float, representing our desired Bayesian risk limit.
+    We will continue scaling up the sample until one candidate wins, with
+    probability >= (1-risk_limit)
+
+    -scale_factor is a float, representing how quickly we scale up our sample.
+    In each iteration of our work estimation procedure, we test the risk of 
+    a sample. Then, we increase the sample size.
+    Initially, we go from sample_size to (1+scale_factor)*sample_size. Then,
+    to (1+2*scale_factor)*sample_size, etc.
+
+    Returns:
+
+    -scale_increase is an integer, representing how many times we had to
+    scale up our sample size before our risk limit was satisfied. A scale_increase
+    of 5 implies that the required sample size will be (1+5*scale_factor) times
+    the original sample size.
+    """
+
+
+    current_win_probs = compute_win_probs(sample_tallies,
+                      total_num_votes=total_num_votes,
+                      seed=seed,
+                      num_trials=num_trials,
+                      candidate_names=candidate_names,
+                      vote_for_n=1)
+    current_win_probs = [k[1] for k in current_win_probs]
+    scale = 1.0
+    scale_increase = 0
+    if max(current_win_probs) >= (1.0 - risk_limit):
+        return scale_increase
+    matched = (max(current_win_probs) >= (1.0 - risk_limit))
+    while not matched:
+        scale_increase += 1
+        new_scale = 1+scale_increase*scale_factor
+        updated_sample_tallies = deepcopy(sample_tallies)
+        for i, county_sample in enumerate(sample_tallies):
+            for j, num_votes in enumerate(county_sample):
+                updated_sample_tallies[i][j] = num_votes*new_scale
+        current_win_probs = compute_win_probs(updated_sample_tallies,
+                      total_num_votes=total_num_votes,
+                      seed=seed,
+                      num_trials=num_trials,
+                      candidate_names=candidate_names,
+                      vote_for_n=1)
+        current_win_probs = [k[1] for k in current_win_probs]
+        matched = (max(current_win_probs) >= (1.0 - risk_limit))
+    return scale_increase
+    
 
 ##############################################################################
 ## Routines for command-line interface and file (csv) input
 ##############################################################################
+
+def print_work_estimate(sample_tallies, scale_factor, risk_limit, scale_increase):
+    """
+    Given a list of sample tallies, the scale increase and scale factor
+    calculated from our work estimation, and the desired Bayesian risk limit,
+    print our calculated work estimate.
+
+    Input Parameters:
+
+    -sample_tallies is a list of lists. Each list represents the sample tally
+    for a given county. So, sample_tallies[i] represents the tally for county
+    i. Then, sample_tallies[i][j] represents the number of votes candidate
+    j receives in county i.
+
+    -scale_factor is a float, representing how quickly we scale up our sample.
+    In each iteration of our work estimation procedure, we test the risk of 
+    a sample. Then, we increase the sample size.
+    Initially, we go from sample_size to (1+scale_factor)*sample_size. Then,
+    to (1+2*scale_factor)*sample_size, etc.
+
+    -risk_limit is a float, representing our desired Bayesian risk limit.
+    We will continue scaling up the sample until one candidate wins, with
+    probability >= (1-risk_limit)
+
+    -scale_increase is an integer, representing how many times we had to
+    scale up our sample size before our risk limit was satisfied. A scale_increase
+    of 5 implies that the required sample size will be (1+5*scale_factor) times
+    the original sample size.
+
+
+
+    Returns:
+
+    -None, but estimates how many more ballots we have to sample according to
+    our work estimation plan.
+    """
+    scale = 1 + scale_increase*scale_factor
+    increase_in_sample = 0
+    for i, county_sample in enumerate(sample_tallies):
+        for j, num_votes in enumerate(county_sample):
+            increase_in_sample += (num_votes*scale - num_votes)
+    # If we require an increase in sample size, round up the desired increase
+    increase_in_sample = ceil(increase_in_sample)
+    print("If the newly sampled votes follow the same distribution as "
+          "the current sample, then we will require {} more votes to satisfy "
+          "our risk limit of {}.".format(
+            increase_in_sample,
+            risk_limit))
 
 def print_results(candidate_names, win_probs, vote_for_n):
     """
@@ -552,6 +691,28 @@ def main():
                         type=int,
                         default=1)
 
+    parser.add_argument("--estimate_work",
+                        help="When we want to estimate how many more samples we will "
+                             "require before the risk limit will be satisfied "
+                             "we set this to be True.",
+                        type=bool,
+                        default=False)
+
+    parser.add_argument("--estimate_risk_limit",
+                        help="Risk limit, used in work estimation. We will continue "
+                             "to scale up the sample size, until this risk limit is satisfied.",
+                        type=float,
+                        default=0.05)
+
+    parser.add_argument("--scale_factor",
+                        help="When estimating work, we continuously scale up the sample size "
+                             "until the risk limit is satisfied. Scale factor represents the "
+                             "fraction by which we increase the sample size by, at each step. A "
+                             "scale factor of 0.1 (default) means the sample size increases by "
+                             "10% each time.",
+                        type=float,
+                        default=0.1)
+
     args = parser.parse_args()
     if args.path_to_csv is None and args.total_num_votes is None:
         parser.print_help()
@@ -578,6 +739,22 @@ def main():
                     vote_for_n,
                     args.pseudocount_for_prior)
     print_results(candidate_names, win_probs, vote_for_n)
+
+    if args.estimate_work:
+        risk_limit = args.estimate_risk_limit
+        scale_factor = args.scale_factor
+        scale_increase = estimate_work(sample_tallies,
+                  total_num_votes,
+                  args.audit_seed,
+                  args.num_trials,
+                  candidate_names,
+                  risk_limit=risk_limit,
+                  scale_factor=scale_factor)
+        
+        print_work_estimate(sample_tallies,
+                            scale_factor=scale_factor,
+                            risk_limit=risk_limit,
+                            scale_increase=scale_increase)
 
 
 if __name__ == '__main__':
