@@ -62,6 +62,7 @@ import argparse
 
 from copy import deepcopy
 import csv
+from math import ceil
 import sys
 
 import numpy as np
@@ -132,7 +133,8 @@ def create_rs(seed):
 ## Main computational routines
 ##############################################################################
 
-def dirichlet_multinomial(sample_tally, total_num_votes, rs):
+def dirichlet_multinomial(
+    sample_tally, total_num_votes, rs, pseudocount_for_prior):
     """
     Return a sample according to the Dirichlet multinomial distribution,
     given a sample tally, the number of votes in the election,
@@ -152,6 +154,11 @@ def dirichlet_multinomial(sample_tally, total_num_votes, rs):
     random functions in the simulation of the remaining votes. In particular,
     the gamma functions are made deterministic using this state.
 
+    -pseudocount_for_prior is an integer, defining how many votes we add
+    in by default, for each candidate, as a prior. The default of 1 gives
+    a uniform prior over all the candidates that they each automatically
+    receive 1 vote.
+
     Returns:
 
     -multinomial_sample is a list of integers, which sums up
@@ -167,7 +174,6 @@ def dirichlet_multinomial(sample_tally, total_num_votes, rs):
 
     nonsample_size = total_num_votes - sample_size
 
-    pseudocount_for_prior = 1
     sample_with_prior = deepcopy(sample_tally)
     sample_with_prior = [k + pseudocount_for_prior
                          for k in sample_with_prior]
@@ -181,7 +187,8 @@ def dirichlet_multinomial(sample_tally, total_num_votes, rs):
     return multinomial_sample
 
 
-def generate_nonsample_tally(sample_tally, total_num_votes, seed):
+def generate_nonsample_tally(
+    sample_tally, total_num_votes, seed, pseudocount_for_prior):
     """
     Given a sample_tally, the total number of votes in an election, and a seed,
     generate the nonsample tally in the election using the Dirichlet multinomial
@@ -199,6 +206,11 @@ def generate_nonsample_tally(sample_tally, total_num_votes, seed):
     -seed is an integer or None. Assuming that it isn't None, we
     use it to seed the random state for the audit.
 
+    -pseudocount_for_prior is an integer, defining how many votes we add
+    in by default, for each candidate, as a prior. The default of 1 gives
+    a uniform prior over all the candidates that they each automatically
+    receive 1 vote.
+
     Returns:
 
     -nonsample_tally is list of integers, which sums up
@@ -208,12 +220,13 @@ def generate_nonsample_tally(sample_tally, total_num_votes, seed):
     """
 
     rs = create_rs(seed)
-    nonsample_tally = dirichlet_multinomial(sample_tally, total_num_votes, rs)
+    nonsample_tally = dirichlet_multinomial(
+        sample_tally, total_num_votes, rs, pseudocount_for_prior)
     return nonsample_tally
 
 
 def compute_winner(sample_tallies, total_num_votes, vote_for_n,
-                   seed, pretty_print=False):
+                   seed, pseudocount_for_prior, pretty_print=False):
     """
     Given a list of sample tallies (one sample tally per county)
     a list giving the total number of votes cast in each county,
@@ -243,6 +256,11 @@ def compute_winner(sample_tallies, total_num_votes, vote_for_n,
     for candidate i as any time they are in the top n candidates in the final
     tally.
 
+    -pseudocount_for_prior is an integer, defining how many votes we add
+    in by default, for each candidate, as a prior. The default of 1 gives
+    a uniform prior over all the candidates that they each automatically
+    receive 1 vote.
+
     -pretty_print is a Boolean, which defaults to False. When it's set to
     True, we print the winning candidate, the number of votes they have
     received and the final vote tally for all the candidates.
@@ -256,7 +274,7 @@ def compute_winner(sample_tallies, total_num_votes, vote_for_n,
     final_tallies = None
     for i, sample_tally in enumerate(sample_tallies):   # loop over counties
         nonsample_tally = generate_nonsample_tally(
-            sample_tally, total_num_votes[i], seed)
+            sample_tally, total_num_votes[i], seed, pseudocount_for_prior)
         final_county_tally = [sum(k)
                               for k in zip(sample_tally, nonsample_tally)]
         if final_tallies is None:
@@ -287,7 +305,8 @@ def compute_win_probs(sample_tallies,
                       seed,
                       num_trials,
                       candidate_names,
-                      vote_for_n):
+                      vote_for_n,
+                      pseudocount_for_prior=1):
     """
 
     Runs num_trials simulations of the Bayesian audit to estimate
@@ -324,6 +343,11 @@ def compute_win_probs(sample_tallies,
     for candidate i as any time they are in the top n candidates in the final
     tally.
 
+    -pseudocount_for_prior is an integer, defining how many votes we add
+    in by default, for each candidate, as a prior. The default of 1 gives
+    a uniform prior over all the candidates that they each automatically
+    receive 1 vote.
+
     Returns:
 
     -win_probs is a list of pairs (i, p) where p is the fractional
@@ -341,17 +365,156 @@ def compute_win_probs(sample_tallies,
         winners = compute_winner(sample_tallies,
                                 total_num_votes,
                                 vote_for_n,
-                                seed_i)
+                                seed_i,
+                                pseudocount_for_prior)
         for winner in winners:
             win_count[winner+1] += 1
     win_probs = [(i, win_count[i]/float(num_trials))
                  for i in range(1, len(win_count))]
     return win_probs
 
+def estimate_work(sample_tallies,
+                  total_num_votes,
+                  seed,
+                  num_trials,
+                  candidate_names,
+                  risk_limit,
+                  scale_factor=0.1):
+    """
+
+    Runs several num_trials simulations of the Bayesian audit to estimate
+    the work leftover.
+
+    In particular, we run a single simulation, with the current sample
+    tally to get the Bayesian risk of the sample. Then, if the sample
+    doesn't satisfy our risk limit, we multiply each element in our
+    sample tally by (1+scale_factor). Using this, we check
+    if our sample tally is satisfied - if not, we try multiplying
+    by (1+2*scale_factor). We repeat this process until our risk
+    limit is satisfied. When our risk limit is satisfied for some candidate,
+    after multiplying each sample tally by (1+x*scale_factor), we return
+    our value for x, to estimate how much work is left in the audit.
+
+    Input Parameters:
+
+    -sample_tallies is a list of lists. Each list represents the sample tally
+    for a given county. So, sample_tallies[i] represents the tally for county
+    i. Then, sample_tallies[i][j] represents the number of votes candidate
+    j receives in county i.
+
+    -total_num_votes is an integer representing the number of
+    ballots that were cast in this election.
+
+    -seed is an integer or None. Assuming that it isn't None, we
+    use it to seed the random state for the audit.
+
+    -num_trials is an integer which represents how many simulations
+    of the Bayesian audit we run, to estimate the win probabilities
+    of the candidates, for each given sample size.
+
+    -candidate_names is an ordered list of strings, containing the name of
+    every candidate in the contest we are auditing.
+
+    -risk_limit is a float, representing our desired Bayesian risk limit.
+    We will continue scaling up the sample until one candidate wins, with
+    probability >= (1-risk_limit)
+
+    -scale_factor is a float, representing how quickly we scale up our sample.
+    In each iteration of our work estimation procedure, we test the risk of 
+    a sample. Then, we increase the sample size.
+    Initially, we go from sample_size to (1+scale_factor)*sample_size. Then,
+    to (1+2*scale_factor)*sample_size, etc.
+
+    Returns:
+
+    -scale_increase is an integer, representing how many times we had to
+    scale up our sample size before our risk limit was satisfied. A scale_increase
+    of 5 implies that the required sample size will be (1+5*scale_factor) times
+    the original sample size.
+    """
+
+
+    current_win_probs = compute_win_probs(sample_tallies,
+                      total_num_votes=total_num_votes,
+                      seed=seed,
+                      num_trials=num_trials,
+                      candidate_names=candidate_names,
+                      vote_for_n=1)
+    current_win_probs = [k[1] for k in current_win_probs]
+    scale = 1.0
+    scale_increase = 0
+    if max(current_win_probs) >= (1.0 - risk_limit):
+        return scale_increase
+    matched = (max(current_win_probs) >= (1.0 - risk_limit))
+    while not matched:
+        scale_increase += 1
+        new_scale = 1+scale_increase*scale_factor
+        updated_sample_tallies = deepcopy(sample_tallies)
+        for i, county_sample in enumerate(sample_tallies):
+            for j, num_votes in enumerate(county_sample):
+                updated_sample_tallies[i][j] = num_votes*new_scale
+        current_win_probs = compute_win_probs(updated_sample_tallies,
+                      total_num_votes=total_num_votes,
+                      seed=seed,
+                      num_trials=num_trials,
+                      candidate_names=candidate_names,
+                      vote_for_n=1)
+        current_win_probs = [k[1] for k in current_win_probs]
+        matched = (max(current_win_probs) >= (1.0 - risk_limit))
+    return scale_increase
+    
 
 ##############################################################################
 ## Routines for command-line interface and file (csv) input
 ##############################################################################
+
+def print_work_estimate(sample_tallies, scale_factor, risk_limit, scale_increase):
+    """
+    Given a list of sample tallies, the scale increase and scale factor
+    calculated from our work estimation, and the desired Bayesian risk limit,
+    print our calculated work estimate.
+
+    Input Parameters:
+
+    -sample_tallies is a list of lists. Each list represents the sample tally
+    for a given county. So, sample_tallies[i] represents the tally for county
+    i. Then, sample_tallies[i][j] represents the number of votes candidate
+    j receives in county i.
+
+    -scale_factor is a float, representing how quickly we scale up our sample.
+    In each iteration of our work estimation procedure, we test the risk of 
+    a sample. Then, we increase the sample size.
+    Initially, we go from sample_size to (1+scale_factor)*sample_size. Then,
+    to (1+2*scale_factor)*sample_size, etc.
+
+    -risk_limit is a float, representing our desired Bayesian risk limit.
+    We will continue scaling up the sample until one candidate wins, with
+    probability >= (1-risk_limit)
+
+    -scale_increase is an integer, representing how many times we had to
+    scale up our sample size before our risk limit was satisfied. A scale_increase
+    of 5 implies that the required sample size will be (1+5*scale_factor) times
+    the original sample size.
+
+
+
+    Returns:
+
+    -None, but estimates how many more ballots we have to sample according to
+    our work estimation plan.
+    """
+    scale = 1 + scale_increase*scale_factor
+    increase_in_sample = 0
+    for i, county_sample in enumerate(sample_tallies):
+        for j, num_votes in enumerate(county_sample):
+            increase_in_sample += (num_votes*scale - num_votes)
+    # If we require an increase in sample size, round up the desired increase
+    increase_in_sample = ceil(increase_in_sample)
+    print("If the newly sampled votes follow the same distribution as "
+          "the current sample, then we will require {} more votes to satisfy "
+          "our risk limit of {}.".format(
+            increase_in_sample,
+            risk_limit))
 
 def print_results(candidate_names, win_probs, vote_for_n):
     """
@@ -520,6 +683,36 @@ def main():
                         type=int,
                         default=1)
 
+    parser.add_argument("--pseudocount_for_prior",
+                        help="When we have no votes for a candidate, the Bayesian "
+                             "prior adds in some number of votes for all candidates, "
+                             "so that we have some probability of generating new "
+                             "votes for each. This prior defaults to 1.",
+                        type=int,
+                        default=1)
+
+    parser.add_argument("--estimate_work",
+                        help="When we want to estimate how many more samples we will "
+                             "require before the risk limit will be satisfied "
+                             "we set this to be True.",
+                        type=bool,
+                        default=False)
+
+    parser.add_argument("--estimate_risk_limit",
+                        help="Risk limit, used in work estimation. We will continue "
+                             "to scale up the sample size, until this risk limit is satisfied.",
+                        type=float,
+                        default=0.05)
+
+    parser.add_argument("--scale_factor",
+                        help="When estimating work, we continuously scale up the sample size "
+                             "until the risk limit is satisfied. Scale factor represents the "
+                             "fraction by which we increase the sample size by, at each step. A "
+                             "scale factor of 0.1 (default) means the sample size increases by "
+                             "10% each time.",
+                        type=float,
+                        default=0.1)
+
     args = parser.parse_args()
     if args.path_to_csv is None and args.total_num_votes is None:
         parser.print_help()
@@ -543,8 +736,25 @@ def main():
                     args.audit_seed,
                     args.num_trials,
                     candidate_names,
-                    vote_for_n)
+                    vote_for_n,
+                    args.pseudocount_for_prior)
     print_results(candidate_names, win_probs, vote_for_n)
+
+    if args.estimate_work:
+        risk_limit = args.estimate_risk_limit
+        scale_factor = args.scale_factor
+        scale_increase = estimate_work(sample_tallies,
+                  total_num_votes,
+                  args.audit_seed,
+                  args.num_trials,
+                  candidate_names,
+                  risk_limit=risk_limit,
+                  scale_factor=scale_factor)
+        
+        print_work_estimate(sample_tallies,
+                            scale_factor=scale_factor,
+                            risk_limit=risk_limit,
+                            scale_increase=scale_increase)
 
 
 if __name__ == '__main__':

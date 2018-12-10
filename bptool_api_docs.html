@@ -1077,7 +1077,7 @@ model, in a ballot-polling audit of a plurality election.  The
 election may be single-jurisdiction or multi-jurisdiction.  In this
 module we call a jurisdiction a "county" for convenience, although it
 may be a precinct or a state or something else, as long as you can
-sample its collection of paper ballots.</p>
+sample from its collection of paper ballots.</p>
 <p>The Bayesian model uses a prior pseudocount of "+1" for each candidate.</p>
 <p>If this module is imported, rather than used stand-alone, then the procedure
     compute_win_probs
@@ -1100,6 +1100,22 @@ given sample tallies for each county.</p>
     the candidate names for the contest being audited.</p>
 <p>There are optional parameters as well, to see the documentation of them, do
     python bptool.py --h</p>
+<p>More description of Bayesian auditing methods can be found in:</p>
+<div class="codehilite"><pre><span></span>A Bayesian Method for Auditing Elections
+by Ronald L. Rivest and Emily Shen
+EVN/WOTE&#39;12 Proceedings
+http://people.csail.mit.edu/rivest/pubs.html#RS12z
+
+Bayesian Tabulation Audits: Explained and Extended
+by Ronald L. Rivest 
+2018
+http://people.csail.mit.edu/rivest/pubs.html#Riv18a
+
+Bayesian Election Audits in One Page
+by Ronald L. Rivest
+2018
+http://people.csail.mit.edu/rivest/pubs.html#Riv18b
+</pre></div>
   
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-bptool', this);">Show source &equiv;</a></p>
   <div id="source-bptool" class="source">
@@ -1115,7 +1131,7 @@ given sample tallies for each county.</p>
 <span class="sd">election may be single-jurisdiction or multi-jurisdiction.  In this</span>
 <span class="sd">module we call a jurisdiction a &quot;county&quot; for convenience, although it</span>
 <span class="sd">may be a precinct or a state or something else, as long as you can</span>
-<span class="sd">sample its collection of paper ballots.</span>
+<span class="sd">sample from its collection of paper ballots.</span>
 
 <span class="sd">The Bayesian model uses a prior pseudocount of &quot;+1&quot; for each candidate.</span>
 
@@ -1144,8 +1160,24 @@ given sample tallies for each county.</p>
 
 <span class="sd">There are optional parameters as well, to see the documentation of them, do</span>
 <span class="sd">    python bptool.py --h</span>
-<span class="sd">&quot;&quot;&quot;</span>
 
+<span class="sd">More description of Bayesian auditing methods can be found in:</span>
+
+<span class="sd">    A Bayesian Method for Auditing Elections</span>
+<span class="sd">    by Ronald L. Rivest and Emily Shen</span>
+<span class="sd">    EVN/WOTE&#39;12 Proceedings</span>
+<span class="sd">    http://people.csail.mit.edu/rivest/pubs.html#RS12z</span>
+
+<span class="sd">    Bayesian Tabulation Audits: Explained and Extended</span>
+<span class="sd">    by Ronald L. Rivest </span>
+<span class="sd">    2018</span>
+<span class="sd">    http://people.csail.mit.edu/rivest/pubs.html#Riv18a    </span>
+
+<span class="sd">    Bayesian Election Audits in One Page</span>
+<span class="sd">    by Ronald L. Rivest</span>
+<span class="sd">    2018</span>
+<span class="sd">    http://people.csail.mit.edu/rivest/pubs.html#Riv18b    </span>
+<span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">argparse</span>
 
@@ -1221,7 +1253,8 @@ given sample tallies for each county.</p>
 <span class="c1">## Main computational routines</span>
 <span class="c1">##############################################################################</span>
 
-<span class="k">def</span> <span class="nf">dirichlet_multinomial</span><span class="p">(</span><span class="n">sample_tally</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">,</span> <span class="n">rs</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">dirichlet_multinomial</span><span class="p">(</span>
+    <span class="n">sample_tally</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">,</span> <span class="n">rs</span><span class="p">,</span> <span class="n">pseudocount_for_prior</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Return a sample according to the Dirichlet multinomial distribution,</span>
 <span class="sd">    given a sample tally, the number of votes in the election,</span>
@@ -1241,6 +1274,11 @@ given sample tallies for each county.</p>
 <span class="sd">    random functions in the simulation of the remaining votes. In particular,</span>
 <span class="sd">    the gamma functions are made deterministic using this state.</span>
 
+<span class="sd">    -pseudocount_for_prior is an integer, defining how many votes we add</span>
+<span class="sd">    in by default, for each candidate, as a prior. The default of 1 gives</span>
+<span class="sd">    a uniform prior over all the candidates that they each automatically</span>
+<span class="sd">    receive 1 vote.</span>
+
 <span class="sd">    Returns:</span>
 
 <span class="sd">    -multinomial_sample is a list of integers, which sums up</span>
@@ -1256,7 +1294,6 @@ given sample tallies for each county.</p>
 
     <span class="n">nonsample_size</span> <span class="o">=</span> <span class="n">total_num_votes</span> <span class="o">-</span> <span class="n">sample_size</span>
 
-    <span class="n">pseudocount_for_prior</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">sample_with_prior</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">sample_tally</span><span class="p">)</span>
     <span class="n">sample_with_prior</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="o">+</span> <span class="n">pseudocount_for_prior</span>
                          <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">sample_with_prior</span><span class="p">]</span>
@@ -1270,7 +1307,8 @@ given sample tallies for each county.</p>
     <span class="k">return</span> <span class="n">multinomial_sample</span>
 
 
-<span class="k">def</span> <span class="nf">generate_nonsample_tally</span><span class="p">(</span><span class="n">sample_tally</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">,</span> <span class="n">seed</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">generate_nonsample_tally</span><span class="p">(</span>
+    <span class="n">sample_tally</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">,</span> <span class="n">seed</span><span class="p">,</span> <span class="n">pseudocount_for_prior</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Given a sample_tally, the total number of votes in an election, and a seed,</span>
 <span class="sd">    generate the nonsample tally in the election using the Dirichlet multinomial</span>
@@ -1288,6 +1326,11 @@ given sample tallies for each county.</p>
 <span class="sd">    -seed is an integer or None. Assuming that it isn&#39;t None, we</span>
 <span class="sd">    use it to seed the random state for the audit.</span>
 
+<span class="sd">    -pseudocount_for_prior is an integer, defining how many votes we add</span>
+<span class="sd">    in by default, for each candidate, as a prior. The default of 1 gives</span>
+<span class="sd">    a uniform prior over all the candidates that they each automatically</span>
+<span class="sd">    receive 1 vote.</span>
+
 <span class="sd">    Returns:</span>
 
 <span class="sd">    -nonsample_tally is list of integers, which sums up</span>
@@ -1297,11 +1340,13 @@ given sample tallies for each county.</p>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">rs</span> <span class="o">=</span> <span class="n">create_rs</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
-    <span class="n">nonsample_tally</span> <span class="o">=</span> <span class="n">dirichlet_multinomial</span><span class="p">(</span><span class="n">sample_tally</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">,</span> <span class="n">rs</span><span class="p">)</span>
+    <span class="n">nonsample_tally</span> <span class="o">=</span> <span class="n">dirichlet_multinomial</span><span class="p">(</span>
+        <span class="n">sample_tally</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">,</span> <span class="n">rs</span><span class="p">,</span> <span class="n">pseudocount_for_prior</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">nonsample_tally</span>
 
 
-<span class="k">def</span> <span class="nf">compute_winner</span><span class="p">(</span><span class="n">sample_tallies</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">,</span> <span class="n">seed</span><span class="p">,</span> <span class="n">pretty_print</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">compute_winner</span><span class="p">(</span><span class="n">sample_tallies</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">,</span> <span class="n">vote_for_n</span><span class="p">,</span>
+                   <span class="n">seed</span><span class="p">,</span> <span class="n">pseudocount_for_prior</span><span class="p">,</span> <span class="n">pretty_print</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Given a list of sample tallies (one sample tally per county)</span>
 <span class="sd">    a list giving the total number of votes cast in each county,</span>
@@ -1325,6 +1370,17 @@ given sample tallies for each county.</p>
 <span class="sd">    -seed is an integer or None. Assuming that it isn&#39;t None, we</span>
 <span class="sd">    use it to seed the random state for the audit.</span>
 
+<span class="sd">    -vote_for_n is an integer, parsed from the command-line args. Its default</span>
+<span class="sd">    value is 1, which means we only calculate a single winner for the election.</span>
+<span class="sd">    For other values n, we simulate the unnsampled votes and define a win</span>
+<span class="sd">    for candidate i as any time they are in the top n candidates in the final</span>
+<span class="sd">    tally.</span>
+
+<span class="sd">    -pseudocount_for_prior is an integer, defining how many votes we add</span>
+<span class="sd">    in by default, for each candidate, as a prior. The default of 1 gives</span>
+<span class="sd">    a uniform prior over all the candidates that they each automatically</span>
+<span class="sd">    receive 1 vote.</span>
+
 <span class="sd">    -pretty_print is a Boolean, which defaults to False. When it&#39;s set to</span>
 <span class="sd">    True, we print the winning candidate, the number of votes they have</span>
 <span class="sd">    received and the final vote tally for all the candidates.</span>
@@ -1335,30 +1391,42 @@ given sample tallies for each county.</p>
 <span class="sd">    won the election.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">final_tally</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">final_tallies</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sample_tally</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sample_tallies</span><span class="p">):</span>   <span class="c1"># loop over counties</span>
         <span class="n">nonsample_tally</span> <span class="o">=</span> <span class="n">generate_nonsample_tally</span><span class="p">(</span>
-            <span class="n">sample_tally</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">seed</span><span class="p">)</span>
+            <span class="n">sample_tally</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">seed</span><span class="p">,</span> <span class="n">pseudocount_for_prior</span><span class="p">)</span>
         <span class="n">final_county_tally</span> <span class="o">=</span> <span class="p">[</span><span class="nb">sum</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
                               <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">sample_tally</span><span class="p">,</span> <span class="n">nonsample_tally</span><span class="p">)]</span>
-        <span class="k">if</span> <span class="n">final_tally</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">final_tally</span> <span class="o">=</span> <span class="n">final_county_tally</span>
+        <span class="k">if</span> <span class="n">final_tallies</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">final_tallies</span> <span class="o">=</span> <span class="n">final_county_tally</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">final_tally</span> <span class="o">=</span> <span class="p">[</span><span class="nb">sum</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
-                           <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">final_tally</span><span class="p">,</span> <span class="n">final_county_tally</span><span class="p">)]</span>
-    <span class="n">winner</span> <span class="o">=</span> <span class="n">final_tally</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">final_tally</span><span class="p">))</span>
+            <span class="n">final_tallies</span> <span class="o">=</span> <span class="p">[</span><span class="nb">sum</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                           <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">final_tallies</span><span class="p">,</span> <span class="n">final_county_tally</span><span class="p">)]</span>
+    <span class="n">final_tallies</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="n">final_tallies</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">final_tallies</span><span class="p">))]</span>
+    <span class="n">final_tallies</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">winners_with_tallies</span> <span class="o">=</span> <span class="n">final_tallies</span><span class="p">[</span><span class="o">-</span><span class="n">vote_for_n</span><span class="p">:]</span>
+    <span class="n">winners</span> <span class="o">=</span> <span class="p">[</span><span class="n">winner_tally</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">winner_tally</span> <span class="ow">in</span> <span class="n">winners_with_tallies</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">pretty_print</span><span class="p">:</span>
-        <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Candidate {} is the winner with {} votes. &#39;</span>
-              <span class="s1">&#39;The final vote tally for all the candidates was {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                  <span class="n">winner</span><span class="p">,</span> <span class="n">final_tally</span><span class="p">[</span><span class="n">winner</span><span class="p">],</span> <span class="n">final_tally</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">winner</span>
+        <span class="n">results_str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">winners</span><span class="p">)):</span>
+            <span class="n">results_str</span> <span class="o">+=</span> <span class="p">(</span>
+                <span class="s2">&quot;Candidate {} is a winner with {} votes. &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">winners</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">final_tallies</span><span class="p">[</span><span class="n">winners</span><span class="p">[</span><span class="n">i</span><span class="p">]][</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">results_str</span> <span class="o">+=</span> <span class="p">(</span>
+            <span class="s2">&quot;The final vote tally for all the candidates &quot;</span>
+            <span class="s2">&quot;was {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">final_tally</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">final_tally</span> <span class="ow">in</span> <span class="n">final_tallies</span><span class="p">]))</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">results_str</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">winners</span>
 
 
 <span class="k">def</span> <span class="nf">compute_win_probs</span><span class="p">(</span><span class="n">sample_tallies</span><span class="p">,</span>
                       <span class="n">total_num_votes</span><span class="p">,</span>
                       <span class="n">seed</span><span class="p">,</span>
                       <span class="n">num_trials</span><span class="p">,</span>
-                      <span class="n">candidate_names</span><span class="p">):</span>
+                      <span class="n">candidate_names</span><span class="p">,</span>
+                      <span class="n">vote_for_n</span><span class="p">,</span>
+                      <span class="n">pseudocount_for_prior</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">    Runs num_trials simulations of the Bayesian audit to estimate</span>
@@ -1389,6 +1457,17 @@ given sample tallies for each county.</p>
 <span class="sd">    -candidate_names is an ordered list of strings, containing the name of</span>
 <span class="sd">    every candidate in the contest we are auditing.</span>
 
+<span class="sd">    -vote_for_n is an integer, parsed from the command-line args. Its default</span>
+<span class="sd">    value is 1, which means we only calculate a single winner for the election.</span>
+<span class="sd">    For other values n, we simulate the unnsampled votes and define a win</span>
+<span class="sd">    for candidate i as any time they are in the top n candidates in the final</span>
+<span class="sd">    tally.</span>
+
+<span class="sd">    -pseudocount_for_prior is an integer, defining how many votes we add</span>
+<span class="sd">    in by default, for each candidate, as a prior. The default of 1 gives</span>
+<span class="sd">    a uniform prior over all the candidates that they each automatically</span>
+<span class="sd">    receive 1 vote.</span>
+
 <span class="sd">    Returns:</span>
 
 <span class="sd">    -win_probs is a list of pairs (i, p) where p is the fractional</span>
@@ -1403,10 +1482,13 @@ given sample tallies for each county.</p>
         <span class="c1"># Adding i to seed caused correlations, as numpy apparently</span>
         <span class="c1"># adds one per trial, so we multiply i by 314...</span>
         <span class="n">seed_i</span> <span class="o">=</span> <span class="n">seed</span> <span class="o">+</span> <span class="n">i</span><span class="o">*</span><span class="mi">314159265</span>
-        <span class="n">winner</span> <span class="o">=</span> <span class="n">compute_winner</span><span class="p">(</span><span class="n">sample_tallies</span><span class="p">,</span>
+        <span class="n">winners</span> <span class="o">=</span> <span class="n">compute_winner</span><span class="p">(</span><span class="n">sample_tallies</span><span class="p">,</span>
                                 <span class="n">total_num_votes</span><span class="p">,</span>
-                                <span class="n">seed_i</span><span class="p">)</span>
-        <span class="n">win_count</span><span class="p">[</span><span class="n">winner</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                                <span class="n">vote_for_n</span><span class="p">,</span>
+                                <span class="n">seed_i</span><span class="p">,</span>
+                                <span class="n">pseudocount_for_prior</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">winner</span> <span class="ow">in</span> <span class="n">winners</span><span class="p">:</span>
+            <span class="n">win_count</span><span class="p">[</span><span class="n">winner</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
     <span class="n">win_probs</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">win_count</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">num_trials</span><span class="p">))</span>
                  <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">win_count</span><span class="p">))]</span>
     <span class="k">return</span> <span class="n">win_probs</span>
@@ -1416,7 +1498,7 @@ given sample tallies for each county.</p>
 <span class="c1">## Routines for command-line interface and file (csv) input</span>
 <span class="c1">##############################################################################</span>
 
-<span class="k">def</span> <span class="nf">print_results</span><span class="p">(</span><span class="n">candidate_names</span><span class="p">,</span> <span class="n">win_probs</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">print_results</span><span class="p">(</span><span class="n">candidate_names</span><span class="p">,</span> <span class="n">win_probs</span><span class="p">,</span> <span class="n">vote_for_n</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Given list of candidate_names and win_probs pairs, print summary</span>
 <span class="sd">    of the Bayesian audit simulations.</span>
@@ -1429,6 +1511,12 @@ given sample tallies for each county.</p>
 <span class="sd">    -win_probs is a list of pairs (i, p) where p is the fractional</span>
 <span class="sd">    representation of the number of trials that candidate i has won</span>
 <span class="sd">    out of the num_trials simulations.</span>
+
+<span class="sd">    -vote_for_n is an integer, parsed from the command-line args. Its default</span>
+<span class="sd">    value is 1, which means we only calculate a single winner for the election.</span>
+<span class="sd">    For other values n, we simulate the unnsampled votes and define a win</span>
+<span class="sd">    for candidate i as any time they are in the top n candidates in the final</span>
+<span class="sd">    tally.</span>
 
 <span class="sd">    Returns:</span>
 
@@ -1445,9 +1533,16 @@ given sample tallies for each county.</p>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">sorted_win_probs</span> <span class="o">=</span> <span class="n">win_probs</span>
 
-    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;{:&lt;24s} </span><span class="se">\t</span><span class="s2"> {:&lt;s}&quot;</span>
-          <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;Candidate name&quot;</span><span class="p">,</span>
-                  <span class="s2">&quot;Estimated probability of winning a full recount&quot;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">vote_for_n</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;{:&lt;24s} </span><span class="se">\t</span><span class="s2"> {:&lt;s}&quot;</span>
+              <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;Candidate name&quot;</span><span class="p">,</span>
+                      <span class="s2">&quot;Estimated probability of winning a full recount&quot;</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;{:&lt;24s} </span><span class="se">\t</span><span class="s2"> {:&lt;s} {} {:&lt;s}&quot;</span>
+              <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;Candidate name&quot;</span><span class="p">,</span>
+                      <span class="s2">&quot;Estimated probability of being among the top&quot;</span><span class="p">,</span>
+                      <span class="n">vote_for_n</span><span class="p">,</span>
+                      <span class="s2">&quot;winners in a full recount&quot;</span><span class="p">))</span>
 
     <span class="k">for</span> <span class="n">candidate_index</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="n">sorted_win_probs</span><span class="p">:</span>
         <span class="n">candidate_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">candidate_names</span><span class="p">[</span><span class="n">candidate_index</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
@@ -1560,6 +1655,24 @@ given sample tallies for each county.</p>
                         <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
                         <span class="n">default</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>
 
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--vote_for_n&quot;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;If we want to simulate voting for multiple &quot;</span>
+                        <span class="s2">&quot;candidates at a time, we can use this parameter &quot;</span>
+                        <span class="s2">&quot;to specify how many candidates a single voter &quot;</span>
+                        <span class="s2">&quot;can vote for. The simulations will then count a candidate&quot;</span>
+                        <span class="s2">&quot;as a winner, each time they appear in the top N &quot;</span>
+                        <span class="s2">&quot;of the candidates, in the simulated elections.&quot;</span><span class="p">,</span>
+                        <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+                        <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--pseudocount_for_prior&quot;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;When we have no votes for a candidate, the Bayesian &quot;</span>
+                             <span class="s2">&quot;prior adds in some number of votes for all candidates, &quot;</span>
+                             <span class="s2">&quot;so that we have some probability of generating new &quot;</span>
+                             <span class="s2">&quot;votes for each. This prior defaults to 1.&quot;</span><span class="p">,</span>
+                        <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+                        <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
     <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">path_to_csv</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">args</span><span class="o">.</span><span class="n">total_num_votes</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">print_help</span><span class="p">()</span>
@@ -1575,13 +1688,17 @@ given sample tallies for each county.</p>
         <span class="n">sample_tallies</span> <span class="o">=</span> <span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">single_county_tally</span><span class="p">]</span>
         <span class="n">candidate_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sample_tallies</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
 
+    <span class="n">vote_for_n</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">vote_for_n</span>
+
     <span class="n">win_probs</span> <span class="o">=</span> <span class="n">compute_win_probs</span><span class="p">(</span>\
                     <span class="n">sample_tallies</span><span class="p">,</span>
                     <span class="n">total_num_votes</span><span class="p">,</span>
                     <span class="n">args</span><span class="o">.</span><span class="n">audit_seed</span><span class="p">,</span>
                     <span class="n">args</span><span class="o">.</span><span class="n">num_trials</span><span class="p">,</span>
-                    <span class="n">candidate_names</span><span class="p">)</span>
-    <span class="n">print_results</span><span class="p">(</span><span class="n">candidate_names</span><span class="p">,</span> <span class="n">win_probs</span><span class="p">)</span>
+                    <span class="n">candidate_names</span><span class="p">,</span>
+                    <span class="n">vote_for_n</span><span class="p">,</span>
+                    <span class="n">args</span><span class="o">.</span><span class="n">pseudocount_for_prior</span><span class="p">)</span>
+    <span class="n">print_results</span><span class="p">(</span><span class="n">candidate_names</span><span class="p">,</span> <span class="n">win_probs</span><span class="p">,</span> <span class="n">vote_for_n</span><span class="p">)</span>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
@@ -1599,7 +1716,7 @@ given sample tallies for each county.</p>
       
   <div class="item">
     <div class="name def" id="bptool.compute_win_probs">
-    <p>def <span class="ident">compute_win_probs</span>(</p><p>sample_tallies, total_num_votes, seed, num_trials, candidate_names)</p>
+    <p>def <span class="ident">compute_win_probs</span>(</p><p>sample_tallies, total_num_votes, seed, num_trials, candidate_names, vote_for_n, pseudocount_for_prior=1)</p>
     </div>
     
 
@@ -1625,6 +1742,15 @@ of the Bayesian audit we run, to estimate the win probabilities
 of the candidates.</p>
 <p>-candidate_names is an ordered list of strings, containing the name of
 every candidate in the contest we are auditing.</p>
+<p>-vote_for_n is an integer, parsed from the command-line args. Its default
+value is 1, which means we only calculate a single winner for the election.
+For other values n, we simulate the unnsampled votes and define a win
+for candidate i as any time they are in the top n candidates in the final
+tally.</p>
+<p>-pseudocount_for_prior is an integer, defining how many votes we add
+in by default, for each candidate, as a prior. The default of 1 gives
+a uniform prior over all the candidates that they each automatically
+receive 1 vote.</p>
 <p>Returns:</p>
 <p>-win_probs is a list of pairs (i, p) where p is the fractional
 representation of the number of trials that candidate i has won
@@ -1636,7 +1762,9 @@ out of the num_trials simulations.</p></div>
                       <span class="n">total_num_votes</span><span class="p">,</span>
                       <span class="n">seed</span><span class="p">,</span>
                       <span class="n">num_trials</span><span class="p">,</span>
-                      <span class="n">candidate_names</span><span class="p">):</span>
+                      <span class="n">candidate_names</span><span class="p">,</span>
+                      <span class="n">vote_for_n</span><span class="p">,</span>
+                      <span class="n">pseudocount_for_prior</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="sd">    Runs num_trials simulations of the Bayesian audit to estimate</span>
@@ -1667,6 +1795,17 @@ out of the num_trials simulations.</p></div>
 <span class="sd">    -candidate_names is an ordered list of strings, containing the name of</span>
 <span class="sd">    every candidate in the contest we are auditing.</span>
 
+<span class="sd">    -vote_for_n is an integer, parsed from the command-line args. Its default</span>
+<span class="sd">    value is 1, which means we only calculate a single winner for the election.</span>
+<span class="sd">    For other values n, we simulate the unnsampled votes and define a win</span>
+<span class="sd">    for candidate i as any time they are in the top n candidates in the final</span>
+<span class="sd">    tally.</span>
+
+<span class="sd">    -pseudocount_for_prior is an integer, defining how many votes we add</span>
+<span class="sd">    in by default, for each candidate, as a prior. The default of 1 gives</span>
+<span class="sd">    a uniform prior over all the candidates that they each automatically</span>
+<span class="sd">    receive 1 vote.</span>
+
 <span class="sd">    Returns:</span>
 
 <span class="sd">    -win_probs is a list of pairs (i, p) where p is the fractional</span>
@@ -1681,10 +1820,13 @@ out of the num_trials simulations.</p></div>
         <span class="c1"># Adding i to seed caused correlations, as numpy apparently</span>
         <span class="c1"># adds one per trial, so we multiply i by 314...</span>
         <span class="n">seed_i</span> <span class="o">=</span> <span class="n">seed</span> <span class="o">+</span> <span class="n">i</span><span class="o">*</span><span class="mi">314159265</span>
-        <span class="n">winner</span> <span class="o">=</span> <span class="n">compute_winner</span><span class="p">(</span><span class="n">sample_tallies</span><span class="p">,</span>
+        <span class="n">winners</span> <span class="o">=</span> <span class="n">compute_winner</span><span class="p">(</span><span class="n">sample_tallies</span><span class="p">,</span>
                                 <span class="n">total_num_votes</span><span class="p">,</span>
-                                <span class="n">seed_i</span><span class="p">)</span>
-        <span class="n">win_count</span><span class="p">[</span><span class="n">winner</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                                <span class="n">vote_for_n</span><span class="p">,</span>
+                                <span class="n">seed_i</span><span class="p">,</span>
+                                <span class="n">pseudocount_for_prior</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">winner</span> <span class="ow">in</span> <span class="n">winners</span><span class="p">:</span>
+            <span class="n">win_count</span><span class="p">[</span><span class="n">winner</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
     <span class="n">win_probs</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">win_count</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">num_trials</span><span class="p">))</span>
                  <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">win_count</span><span class="p">))]</span>
     <span class="k">return</span> <span class="n">win_probs</span>
@@ -1698,7 +1840,7 @@ out of the num_trials simulations.</p></div>
       
   <div class="item">
     <div class="name def" id="bptool.compute_winner">
-    <p>def <span class="ident">compute_winner</span>(</p><p>sample_tallies, total_num_votes, seed, pretty_print=False)</p>
+    <p>def <span class="ident">compute_winner</span>(</p><p>sample_tallies, total_num_votes, vote_for_n, seed, pseudocount_for_prior, pretty_print=False)</p>
     </div>
     
 
@@ -1721,6 +1863,15 @@ j receives in county i.</p>
 ballots that were cast in this election.</p>
 <p>-seed is an integer or None. Assuming that it isn't None, we
 use it to seed the random state for the audit.</p>
+<p>-vote_for_n is an integer, parsed from the command-line args. Its default
+value is 1, which means we only calculate a single winner for the election.
+For other values n, we simulate the unnsampled votes and define a win
+for candidate i as any time they are in the top n candidates in the final
+tally.</p>
+<p>-pseudocount_for_prior is an integer, defining how many votes we add
+in by default, for each candidate, as a prior. The default of 1 gives
+a uniform prior over all the candidates that they each automatically
+receive 1 vote.</p>
 <p>-pretty_print is a Boolean, which defaults to False. When it's set to
 True, we print the winning candidate, the number of votes they have
 received and the final vote tally for all the candidates.</p>
@@ -1730,7 +1881,8 @@ won the election.</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-bptool.compute_winner', this);">Show source &equiv;</a></p>
   <div id="source-bptool.compute_winner" class="source">
-    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">compute_winner</span><span class="p">(</span><span class="n">sample_tallies</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">,</span> <span class="n">seed</span><span class="p">,</span> <span class="n">pretty_print</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">compute_winner</span><span class="p">(</span><span class="n">sample_tallies</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">,</span> <span class="n">vote_for_n</span><span class="p">,</span>
+                   <span class="n">seed</span><span class="p">,</span> <span class="n">pseudocount_for_prior</span><span class="p">,</span> <span class="n">pretty_print</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Given a list of sample tallies (one sample tally per county)</span>
 <span class="sd">    a list giving the total number of votes cast in each county,</span>
@@ -1754,6 +1906,17 @@ won the election.</p></div>
 <span class="sd">    -seed is an integer or None. Assuming that it isn&#39;t None, we</span>
 <span class="sd">    use it to seed the random state for the audit.</span>
 
+<span class="sd">    -vote_for_n is an integer, parsed from the command-line args. Its default</span>
+<span class="sd">    value is 1, which means we only calculate a single winner for the election.</span>
+<span class="sd">    For other values n, we simulate the unnsampled votes and define a win</span>
+<span class="sd">    for candidate i as any time they are in the top n candidates in the final</span>
+<span class="sd">    tally.</span>
+
+<span class="sd">    -pseudocount_for_prior is an integer, defining how many votes we add</span>
+<span class="sd">    in by default, for each candidate, as a prior. The default of 1 gives</span>
+<span class="sd">    a uniform prior over all the candidates that they each automatically</span>
+<span class="sd">    receive 1 vote.</span>
+
 <span class="sd">    -pretty_print is a Boolean, which defaults to False. When it&#39;s set to</span>
 <span class="sd">    True, we print the winning candidate, the number of votes they have</span>
 <span class="sd">    received and the final vote tally for all the candidates.</span>
@@ -1764,23 +1927,33 @@ won the election.</p></div>
 <span class="sd">    won the election.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">final_tally</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">final_tallies</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sample_tally</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sample_tallies</span><span class="p">):</span>   <span class="c1"># loop over counties</span>
         <span class="n">nonsample_tally</span> <span class="o">=</span> <span class="n">generate_nonsample_tally</span><span class="p">(</span>
-            <span class="n">sample_tally</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">seed</span><span class="p">)</span>
+            <span class="n">sample_tally</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">seed</span><span class="p">,</span> <span class="n">pseudocount_for_prior</span><span class="p">)</span>
         <span class="n">final_county_tally</span> <span class="o">=</span> <span class="p">[</span><span class="nb">sum</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
                               <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">sample_tally</span><span class="p">,</span> <span class="n">nonsample_tally</span><span class="p">)]</span>
-        <span class="k">if</span> <span class="n">final_tally</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">final_tally</span> <span class="o">=</span> <span class="n">final_county_tally</span>
+        <span class="k">if</span> <span class="n">final_tallies</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">final_tallies</span> <span class="o">=</span> <span class="n">final_county_tally</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">final_tally</span> <span class="o">=</span> <span class="p">[</span><span class="nb">sum</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
-                           <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">final_tally</span><span class="p">,</span> <span class="n">final_county_tally</span><span class="p">)]</span>
-    <span class="n">winner</span> <span class="o">=</span> <span class="n">final_tally</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">final_tally</span><span class="p">))</span>
+            <span class="n">final_tallies</span> <span class="o">=</span> <span class="p">[</span><span class="nb">sum</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                           <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">final_tallies</span><span class="p">,</span> <span class="n">final_county_tally</span><span class="p">)]</span>
+    <span class="n">final_tallies</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="n">final_tallies</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">final_tallies</span><span class="p">))]</span>
+    <span class="n">final_tallies</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">winners_with_tallies</span> <span class="o">=</span> <span class="n">final_tallies</span><span class="p">[</span><span class="o">-</span><span class="n">vote_for_n</span><span class="p">:]</span>
+    <span class="n">winners</span> <span class="o">=</span> <span class="p">[</span><span class="n">winner_tally</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">winner_tally</span> <span class="ow">in</span> <span class="n">winners_with_tallies</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">pretty_print</span><span class="p">:</span>
-        <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Candidate {} is the winner with {} votes. &#39;</span>
-              <span class="s1">&#39;The final vote tally for all the candidates was {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                  <span class="n">winner</span><span class="p">,</span> <span class="n">final_tally</span><span class="p">[</span><span class="n">winner</span><span class="p">],</span> <span class="n">final_tally</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">winner</span>
+        <span class="n">results_str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">winners</span><span class="p">)):</span>
+            <span class="n">results_str</span> <span class="o">+=</span> <span class="p">(</span>
+                <span class="s2">&quot;Candidate {} is a winner with {} votes. &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">winners</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">final_tallies</span><span class="p">[</span><span class="n">winners</span><span class="p">[</span><span class="n">i</span><span class="p">]][</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">results_str</span> <span class="o">+=</span> <span class="p">(</span>
+            <span class="s2">&quot;The final vote tally for all the candidates &quot;</span>
+            <span class="s2">&quot;was {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">final_tally</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">final_tally</span> <span class="ow">in</span> <span class="n">final_tallies</span><span class="p">]))</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">results_str</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">winners</span>
 </pre></div>
 
   </div>
@@ -1903,7 +2076,7 @@ time if the seed is None.</p></div>
       
   <div class="item">
     <div class="name def" id="bptool.dirichlet_multinomial">
-    <p>def <span class="ident">dirichlet_multinomial</span>(</p><p>sample_tally, total_num_votes, rs)</p>
+    <p>def <span class="ident">dirichlet_multinomial</span>(</p><p>sample_tally, total_num_votes, rs, pseudocount_for_prior)</p>
     </div>
     
 
@@ -1922,6 +2095,10 @@ ballots that were cast in this election.</p>
 <p>-rs is a Numpy RandomState object that is used for any
 random functions in the simulation of the remaining votes. In particular,
 the gamma functions are made deterministic using this state.</p>
+<p>-pseudocount_for_prior is an integer, defining how many votes we add
+in by default, for each candidate, as a prior. The default of 1 gives
+a uniform prior over all the candidates that they each automatically
+receive 1 vote.</p>
 <p>Returns:</p>
 <p>-multinomial_sample is a list of integers, which sums up
 to the total_num_votes - sample_size. The i'th index represents the
@@ -1930,7 +2107,8 @@ votes.</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-bptool.dirichlet_multinomial', this);">Show source &equiv;</a></p>
   <div id="source-bptool.dirichlet_multinomial" class="source">
-    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">dirichlet_multinomial</span><span class="p">(</span><span class="n">sample_tally</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">,</span> <span class="n">rs</span><span class="p">):</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">dirichlet_multinomial</span><span class="p">(</span>
+    <span class="n">sample_tally</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">,</span> <span class="n">rs</span><span class="p">,</span> <span class="n">pseudocount_for_prior</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Return a sample according to the Dirichlet multinomial distribution,</span>
 <span class="sd">    given a sample tally, the number of votes in the election,</span>
@@ -1950,6 +2128,11 @@ votes.</p></div>
 <span class="sd">    random functions in the simulation of the remaining votes. In particular,</span>
 <span class="sd">    the gamma functions are made deterministic using this state.</span>
 
+<span class="sd">    -pseudocount_for_prior is an integer, defining how many votes we add</span>
+<span class="sd">    in by default, for each candidate, as a prior. The default of 1 gives</span>
+<span class="sd">    a uniform prior over all the candidates that they each automatically</span>
+<span class="sd">    receive 1 vote.</span>
+
 <span class="sd">    Returns:</span>
 
 <span class="sd">    -multinomial_sample is a list of integers, which sums up</span>
@@ -1965,7 +2148,6 @@ votes.</p></div>
 
     <span class="n">nonsample_size</span> <span class="o">=</span> <span class="n">total_num_votes</span> <span class="o">-</span> <span class="n">sample_size</span>
 
-    <span class="n">pseudocount_for_prior</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">sample_with_prior</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">sample_tally</span><span class="p">)</span>
     <span class="n">sample_with_prior</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="o">+</span> <span class="n">pseudocount_for_prior</span>
                          <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">sample_with_prior</span><span class="p">]</span>
@@ -1987,7 +2169,7 @@ votes.</p></div>
       
   <div class="item">
     <div class="name def" id="bptool.generate_nonsample_tally">
-    <p>def <span class="ident">generate_nonsample_tally</span>(</p><p>sample_tally, total_num_votes, seed)</p>
+    <p>def <span class="ident">generate_nonsample_tally</span>(</p><p>sample_tally, total_num_votes, seed, pseudocount_for_prior)</p>
     </div>
     
 
@@ -2004,6 +2186,10 @@ i received in the sample.</p>
 ballots that were cast in this election.</p>
 <p>-seed is an integer or None. Assuming that it isn't None, we
 use it to seed the random state for the audit.</p>
+<p>-pseudocount_for_prior is an integer, defining how many votes we add
+in by default, for each candidate, as a prior. The default of 1 gives
+a uniform prior over all the candidates that they each automatically
+receive 1 vote.</p>
 <p>Returns:</p>
 <p>-nonsample_tally is list of integers, which sums up
 to the total_num_votes - sample_size. The i'th index represents the
@@ -2012,7 +2198,8 @@ votes.</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-bptool.generate_nonsample_tally', this);">Show source &equiv;</a></p>
   <div id="source-bptool.generate_nonsample_tally" class="source">
-    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">generate_nonsample_tally</span><span class="p">(</span><span class="n">sample_tally</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">,</span> <span class="n">seed</span><span class="p">):</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">generate_nonsample_tally</span><span class="p">(</span>
+    <span class="n">sample_tally</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">,</span> <span class="n">seed</span><span class="p">,</span> <span class="n">pseudocount_for_prior</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Given a sample_tally, the total number of votes in an election, and a seed,</span>
 <span class="sd">    generate the nonsample tally in the election using the Dirichlet multinomial</span>
@@ -2030,6 +2217,11 @@ votes.</p></div>
 <span class="sd">    -seed is an integer or None. Assuming that it isn&#39;t None, we</span>
 <span class="sd">    use it to seed the random state for the audit.</span>
 
+<span class="sd">    -pseudocount_for_prior is an integer, defining how many votes we add</span>
+<span class="sd">    in by default, for each candidate, as a prior. The default of 1 gives</span>
+<span class="sd">    a uniform prior over all the candidates that they each automatically</span>
+<span class="sd">    receive 1 vote.</span>
+
 <span class="sd">    Returns:</span>
 
 <span class="sd">    -nonsample_tally is list of integers, which sums up</span>
@@ -2039,7 +2231,8 @@ votes.</p></div>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">rs</span> <span class="o">=</span> <span class="n">create_rs</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
-    <span class="n">nonsample_tally</span> <span class="o">=</span> <span class="n">dirichlet_multinomial</span><span class="p">(</span><span class="n">sample_tally</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">,</span> <span class="n">rs</span><span class="p">)</span>
+    <span class="n">nonsample_tally</span> <span class="o">=</span> <span class="n">dirichlet_multinomial</span><span class="p">(</span>
+        <span class="n">sample_tally</span><span class="p">,</span> <span class="n">total_num_votes</span><span class="p">,</span> <span class="n">rs</span><span class="p">,</span> <span class="n">pseudocount_for_prior</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">nonsample_tally</span>
 </pre></div>
 
@@ -2113,6 +2306,24 @@ votes.</p></div>
                         <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
                         <span class="n">default</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>
 
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--vote_for_n&quot;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;If we want to simulate voting for multiple &quot;</span>
+                        <span class="s2">&quot;candidates at a time, we can use this parameter &quot;</span>
+                        <span class="s2">&quot;to specify how many candidates a single voter &quot;</span>
+                        <span class="s2">&quot;can vote for. The simulations will then count a candidate&quot;</span>
+                        <span class="s2">&quot;as a winner, each time they appear in the top N &quot;</span>
+                        <span class="s2">&quot;of the candidates, in the simulated elections.&quot;</span><span class="p">,</span>
+                        <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+                        <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--pseudocount_for_prior&quot;</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;When we have no votes for a candidate, the Bayesian &quot;</span>
+                             <span class="s2">&quot;prior adds in some number of votes for all candidates, &quot;</span>
+                             <span class="s2">&quot;so that we have some probability of generating new &quot;</span>
+                             <span class="s2">&quot;votes for each. This prior defaults to 1.&quot;</span><span class="p">,</span>
+                        <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+                        <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
     <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">path_to_csv</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">args</span><span class="o">.</span><span class="n">total_num_votes</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">print_help</span><span class="p">()</span>
@@ -2128,13 +2339,17 @@ votes.</p></div>
         <span class="n">sample_tallies</span> <span class="o">=</span> <span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">single_county_tally</span><span class="p">]</span>
         <span class="n">candidate_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sample_tallies</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
 
+    <span class="n">vote_for_n</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">vote_for_n</span>
+
     <span class="n">win_probs</span> <span class="o">=</span> <span class="n">compute_win_probs</span><span class="p">(</span>\
                     <span class="n">sample_tallies</span><span class="p">,</span>
                     <span class="n">total_num_votes</span><span class="p">,</span>
                     <span class="n">args</span><span class="o">.</span><span class="n">audit_seed</span><span class="p">,</span>
                     <span class="n">args</span><span class="o">.</span><span class="n">num_trials</span><span class="p">,</span>
-                    <span class="n">candidate_names</span><span class="p">)</span>
-    <span class="n">print_results</span><span class="p">(</span><span class="n">candidate_names</span><span class="p">,</span> <span class="n">win_probs</span><span class="p">)</span>
+                    <span class="n">candidate_names</span><span class="p">,</span>
+                    <span class="n">vote_for_n</span><span class="p">,</span>
+                    <span class="n">args</span><span class="o">.</span><span class="n">pseudocount_for_prior</span><span class="p">)</span>
+    <span class="n">print_results</span><span class="p">(</span><span class="n">candidate_names</span><span class="p">,</span> <span class="n">win_probs</span><span class="p">,</span> <span class="n">vote_for_n</span><span class="p">)</span>
 </pre></div>
 
   </div>
@@ -2232,7 +2447,7 @@ every candidate in the contest we are auditing.</p></div>
       
   <div class="item">
     <div class="name def" id="bptool.print_results">
-    <p>def <span class="ident">print_results</span>(</p><p>candidate_names, win_probs)</p>
+    <p>def <span class="ident">print_results</span>(</p><p>candidate_names, win_probs, vote_for_n)</p>
     </div>
     
 
@@ -2246,13 +2461,18 @@ every candidate in the contest we are auditing.</p>
 <p>-win_probs is a list of pairs (i, p) where p is the fractional
 representation of the number of trials that candidate i has won
 out of the num_trials simulations.</p>
+<p>-vote_for_n is an integer, parsed from the command-line args. Its default
+value is 1, which means we only calculate a single winner for the election.
+For other values n, we simulate the unnsampled votes and define a win
+for candidate i as any time they are in the top n candidates in the final
+tally.</p>
 <p>Returns:</p>
 <p>-None, but prints a summary of how often each candidate has won in
 the simulations.</p></div>
   <div class="source_cont">
   <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-bptool.print_results', this);">Show source &equiv;</a></p>
   <div id="source-bptool.print_results" class="source">
-    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">print_results</span><span class="p">(</span><span class="n">candidate_names</span><span class="p">,</span> <span class="n">win_probs</span><span class="p">):</span>
+    <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">print_results</span><span class="p">(</span><span class="n">candidate_names</span><span class="p">,</span> <span class="n">win_probs</span><span class="p">,</span> <span class="n">vote_for_n</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Given list of candidate_names and win_probs pairs, print summary</span>
 <span class="sd">    of the Bayesian audit simulations.</span>
@@ -2265,6 +2485,12 @@ the simulations.</p></div>
 <span class="sd">    -win_probs is a list of pairs (i, p) where p is the fractional</span>
 <span class="sd">    representation of the number of trials that candidate i has won</span>
 <span class="sd">    out of the num_trials simulations.</span>
+
+<span class="sd">    -vote_for_n is an integer, parsed from the command-line args. Its default</span>
+<span class="sd">    value is 1, which means we only calculate a single winner for the election.</span>
+<span class="sd">    For other values n, we simulate the unnsampled votes and define a win</span>
+<span class="sd">    for candidate i as any time they are in the top n candidates in the final</span>
+<span class="sd">    tally.</span>
 
 <span class="sd">    Returns:</span>
 
@@ -2281,9 +2507,16 @@ the simulations.</p></div>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">sorted_win_probs</span> <span class="o">=</span> <span class="n">win_probs</span>
 
-    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;{:&lt;24s} </span><span class="se">\t</span><span class="s2"> {:&lt;s}&quot;</span>
-          <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;Candidate name&quot;</span><span class="p">,</span>
-                  <span class="s2">&quot;Estimated probability of winning a full recount&quot;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">vote_for_n</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;{:&lt;24s} </span><span class="se">\t</span><span class="s2"> {:&lt;s}&quot;</span>
+              <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;Candidate name&quot;</span><span class="p">,</span>
+                      <span class="s2">&quot;Estimated probability of winning a full recount&quot;</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;{:&lt;24s} </span><span class="se">\t</span><span class="s2"> {:&lt;s} {} {:&lt;s}&quot;</span>
+              <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;Candidate name&quot;</span><span class="p">,</span>
+                      <span class="s2">&quot;Estimated probability of being among the top&quot;</span><span class="p">,</span>
+                      <span class="n">vote_for_n</span><span class="p">,</span>
+                      <span class="s2">&quot;winners in a full recount&quot;</span><span class="p">))</span>
 
     <span class="k">for</span> <span class="n">candidate_index</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="n">sorted_win_probs</span><span class="p">:</span>
         <span class="n">candidate_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">candidate_names</span><span class="p">[</span><span class="n">candidate_index</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
