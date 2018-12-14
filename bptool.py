@@ -146,7 +146,7 @@ def dirichlet_multinomial(sample_tally, total_num_votes, rs):
     i received in the sample.
 
     -total_num_votes is an integer representing the number of
-    ballots that were cast in this election.
+    ballots that were cast in this election within the county.
 
     -rs is a Numpy RandomState object that is used for any
     random functions in the simulation of the remaining votes. In particular,
@@ -194,7 +194,7 @@ def generate_nonsample_tally(sample_tally, total_num_votes, seed):
     i received in the sample.
 
     -total_num_votes is an integer representing the number of
-    ballots that were cast in this election.
+    ballots that were cast in this election within the county.
 
     -seed is an integer or None. Assuming that it isn't None, we
     use it to seed the random state for the audit.
@@ -231,8 +231,10 @@ def compute_winner(sample_tallies, total_num_votes, vote_for_n,
     i. Then, sample_tallies[i][j] represents the number of votes candidate
     j receives in county i.
 
-    -total_num_votes is an integer representing the number of
-    ballots that were cast in this election.
+    -total_num_votes is a list of integers. Each integer represents the total
+    number of votes cast in a given county. So, total_num_votes[i] represents
+    the total votes for county i. The sum of all total_num_votes[i] is the
+    total number of votes in the entire election.
 
     -seed is an integer or None. Assuming that it isn't None, we
     use it to seed the random state for the audit.
@@ -249,10 +251,11 @@ def compute_winner(sample_tallies, total_num_votes, vote_for_n,
 
     Returns:
 
-    -winner is an integer, representing the index of the candidate who
-    won the election.
+    -winners is a list of integers, representing the indices of the candidate
+    who won the election. It's size equals the vote_for_n parameter, which
+    defaults to 1.
     """
-
+ 
     final_tallies = None
     for i, sample_tally in enumerate(sample_tallies):   # loop over counties
         nonsample_tally = generate_nonsample_tally(
@@ -305,8 +308,11 @@ def compute_win_probs(sample_tallies,
     i. Then, sample_tallies[i][j] represents the number of votes candidate
     j receives in county i.
 
-    -total_num_votes is an integer representing the number of
-    ballots that were cast in this election.
+    -total_num_votes is a list of integers representing the number of
+    ballots that were cast in this election. Each integer represents the total
+    number of votes cast in a given county. So, total_num_votes[i] represents
+    the total votes for county i. The sum of all total_num_votes[i] is the
+    total number of votes in the entire election.
 
     -seed is an integer or None. Assuming that it isn't None, we
     use it to seed the random state for the audit.
@@ -425,8 +431,10 @@ def preprocess_csv(path_to_csv):
     i. Then, sample_tallies[i][j] represents the number of votes candidate
     j receives in county i.
 
-    -total_num_votes is an integer representing the number of
-    ballots that were cast in this election.
+    -total_num_votes is a list of integers representing the number of
+    ballots that were cast in this election. Each integer represents the total
+    number of votes cast in a given county. So, total_num_votes[i] represents
+    the total votes for county i.
 
     -candidate_names is an ordered list of strings, containing the name of
     every candidate in the contest we are auditing.
