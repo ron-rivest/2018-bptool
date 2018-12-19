@@ -373,6 +373,58 @@ def compute_win_probs(sample_tallies,
                  for i in range(1, len(win_count))]
     return win_probs
 
+
+def compute_risk(sample_tallies,
+                 candidate_names,
+                 reported_winner,
+                 reported_voteshares):
+    """
+
+    Calculates the RLA risk measurement between the winner
+    and the losers in the contest. Uses technique described in the BRAVO paper.
+
+    Input Parameters:
+
+    -sample_tallies is a list of lists. Each list represents the sample tally
+    for a given county. So, sample_tallies[i] represents the tally for county
+    i. Then, sample_tallies[i][j] represents the number of votes candidate
+    j receives in county i.
+
+    -num_trials is an integer which represents how many simulations
+    of the Bayesian audit we run, to estimate the win probabilities
+    of the candidates.
+
+    -candidate_names is an ordered list of strings, containing the name of
+    every candidate in the contest we are auditing.
+
+    -reported_winner is the name of the candidate who was reported to win the
+    contest
+
+    -reported_voteshares is the percentage of votes that were reported
+    for each candidate.
+
+    """
+    winner_index = candidate_names.index(reported_winner)
+    T_vals = {}
+    multipliers = {}
+    winner_voteshare = reported_voteshares[winner_index]
+    for i in range(len(reported_voteshares)):
+        if i == winner_index:
+            continue
+        multipliers[i] = (winner_voteshare) / (winner_voteshare + reported_voteshares[i])
+        T_vals[i] = 1.
+
+    for i in range(len(sample_tallies)):
+        for j in range(len(sample_tallies[i])):
+            if j != winner_index:
+                T_vals[j] *= ((1-multipliers[j]) / 0.5)**sample_tallies[i][j]
+            else:
+                for k in range(len(reported_voteshares)):
+                    if k == winner_index:
+                        continue
+                    T_vals[k] *= (multipliers[k] / 0.5)**sample_tallies[i][j]
+    return T_vals
+
 def estimate_work(sample_tallies,
                   total_num_votes,
                   seed,
@@ -567,6 +619,43 @@ def print_results(candidate_names, win_probs, vote_for_n):
         print(" {:<24s} \t  {:6.2f} %  "
               .format(candidate_name, 100*prob))
 
+def print_risk(candidate_names, reported_winner, T_vals, alpha):
+    """
+    Given list of candidate_names and win_probs pairs, print summary
+    of the risk measurements.
+
+    Input Parameters:
+
+    -candidate_names is an ordered list of strings, containing the name of
+    every candidate in the contest we are auditing.
+
+    -T_vals is a dictionary, mapping from candidate indices to
+    the risk between them and the winner.
+
+    -alpha is a float, representing the risk limit for the audit.
+
+    Returns:
+
+    -None, but prints a summary of how often each candidate has won in
+    the simulations.
+    """
+
+    print("BPTOOL (Bayesian ballot-polling tool version 0.8)")
+
+    threshold = 1./alpha
+
+    not_satisfied = False
+
+    print("The threshold T value to satisfy the risk limit is {}".format(
+        threshold))
+    print("{:<24s} \t {:<s}"
+            .format("Candidate name",
+                    "Risk between Candidate and Reported Winner"))
+    for i in T_vals:
+        rounded_T_val = int(1000*T_vals[i]) / 1000.
+        print(" {:<24s} \t  {:6.2f}"
+              .format(str(candidate_names[i]), rounded_T_val))
+
 
 def preprocess_csv(path_to_csv):
     """
@@ -709,9 +798,27 @@ def main():
                              "until the risk limit is satisfied. Scale factor represents the "
                              "fraction by which we increase the sample size by, at each step. A "
                              "scale factor of 0.1 (default) means the sample size increases by "
-                             "10% each time.",
+                             "10%% each time.",
                         type=float,
                         default=0.1)
+
+    parser.add_argument("--measure_risk",
+                        help="When set to True, we can also print the risk measurement for the audit.",
+                        type=bool,
+                        default=False)
+
+    parser.add_argument("--reported_voteshares",
+                        help="For risk measurement, input the reported voteshares as a comma-separated"
+                             "list, that adds up to 1 - e.g. 0.5,0.3,0.2",
+                        default='',
+                        type=str)
+
+    parser.add_argument("--risk_limit",
+                        help="For risk measurement, input the required risk limit as a float"
+                             "e.g. 0.05",
+                        default=0.05,
+                        type=float)
+
 
     args = parser.parse_args()
     if args.path_to_csv is None and args.total_num_votes is None:
@@ -755,6 +862,16 @@ def main():
                             scale_factor=scale_factor,
                             risk_limit=risk_limit,
                             scale_increase=scale_increase)
+
+    if args.measure_risk:
+        reported_voteshares = args.reported_voteshares.split(',')
+        reported_voteshares = [float(k.strip()) for k in reported_voteshares]
+        reported_winner = candidate_names[reported_voteshares.index(max(reported_voteshares))]
+        T_vals = compute_risk(sample_tallies,
+                             candidate_names,
+                             reported_winner,
+                             reported_voteshares)
+        print_risk(candidate_names, reported_winner, T_vals, args.risk_limit)
 
 
 if __name__ == '__main__':
