@@ -103,7 +103,7 @@ def convert_int_to_32_bit_numpy_array(v):
         v_parts.append(v % radix)
         v = v // radix
     # note: v_parts will be empty list if v==0, that is OK
-    return np.array(v_parts, dtype=dtype=np.int64)
+    return np.array(v_parts, dtype=np.int64)
 
 
 def create_rs(seed):
